@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import Navigation from "@/components/Navigation";
 
 export const metadata: Metadata = {
-  title: "Nivaro - Club Management Platform",
-  description: "Project and code collaboration tools for technical clubs",
+  title: "Nivaro - Club Management Platform", 
+  description: "A platform for managing clubs and member communities",
 };
 
 export default function RootLayout({
@@ -13,7 +14,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className="antialiased">
+      <body className="font-sans antialiased">
+        <Navigation />
         {children}
       </body>
     </html>

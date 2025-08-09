@@ -1,88 +1,61 @@
-import Link from "next/link";
+import Link from 'next/link';
 
 export default function Home() {
   return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start max-w-4xl">
-        <div className="text-center sm:text-left">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">
-            Welcome to Nivaro
-          </h1>
-          <p className="text-xl text-gray-600 mb-8">
-            Club Management Platform with Specialized Project & Code Collaboration Tools
-          </p>
+    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white flex items-center justify-center p-4">
+      <div className="max-w-md w-full space-y-8 text-center">
+        <div>
+          <h1 className="text-4xl font-bold text-gray-900 mb-2">Nivaro</h1>
+          <p className="text-lg text-gray-600">Club Management Made Simple</p>
         </div>
-
-        <div className="bg-white rounded-lg shadow-lg p-8 w-full">
-          <h2 className="text-2xl font-semibold text-gray-800 mb-6">
-            🚀 New: Project & Code Collaboration Features
-          </h2>
+        
+        <div className="space-y-4">
+          <div className="bg-white p-6 rounded-lg shadow-sm border">
+            <h2 className="text-xl font-semibold text-gray-900 mb-3">Getting Started</h2>
+            <p className="text-gray-600 mb-4">
+              Create a new club or join an existing one to get started with Nivaro.
+            </p>
+            <div className="space-y-3">
+              <Link 
+                href="/onboarding/create"
+                className="block w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors"
+              >
+                Create a Club
+              </Link>
+              <Link 
+                href="/onboarding/join"
+                className="block w-full border border-blue-600 text-blue-600 py-2 px-4 rounded-md hover:bg-blue-50 transition-colors"
+              >
+                Join with Invite Code
+              </Link>
+            </div>
+          </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div className="text-center p-4 border rounded-lg">
-              <div className="text-3xl mb-3">📋</div>
-              <h3 className="font-semibold text-gray-800 mb-2">Kanban Project Board</h3>
-              <p className="text-sm text-gray-600">
-                Organize tasks with To Do, In Progress, and Done columns. 
-                Drag and drop to manage your technical projects efficiently.
-              </p>
+          <div className="bg-white p-6 rounded-lg shadow-sm border">
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Quick Links</h3>
+            <div className="space-y-3">
+              <Link 
+                href="/meetings"
+                className="block w-full bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 transition-colors"
+              >
+                View Meetings & Events
+              </Link>
+              <Link
+                href="/project-collaboration"
+                className="block w-full bg-purple-600 text-white py-2 px-4 rounded-md hover:bg-purple-700 transition-colors"
+              >
+                Project & Code Collaboration
+              </Link>
+              <Link 
+                href="/club/club-1"
+                className="block w-full bg-gray-600 text-white py-2 px-4 rounded-md hover:bg-gray-700 transition-colors"
+              >
+                View Demo Club
+              </Link>
             </div>
-            
-            <div className="text-center p-4 border rounded-lg">
-              <div className="text-3xl mb-3">📁</div>
-              <h3 className="font-semibold text-gray-800 mb-2">Repository Linking</h3>
-              <p className="text-sm text-gray-600">
-                Connect your GitHub and GitLab repositories. 
-                Keep track of all your club&apos;s code projects in one place.
-              </p>
-            </div>
-            
-            <div className="text-center p-4 border rounded-lg">
-              <div className="text-3xl mb-3">💻</div>
-              <h3 className="font-semibold text-gray-800 mb-2">Code Snippet Sharing</h3>
-              <p className="text-sm text-gray-600">
-                Share code snippets with syntax highlighting. 
-                Perfect for tutorials, examples, and team collaboration.
-              </p>
-            </div>
-          </div>
-
-          <div className="text-center">
-            <Link
-              href="/project-collaboration"
-              className="inline-block bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
-            >
-              Try Project Collaboration Features
-            </Link>
           </div>
         </div>
-
-        <div className="text-center sm:text-left w-full">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">
-            About Nivaro
-          </h3>
-          <p className="text-gray-600 mb-4">
-            Nivaro is a comprehensive club management platform designed specifically for technical clubs. 
-            Our specialized project and code collaboration features help technical communities work together 
-            more effectively.
-          </p>
-          <div className="text-sm text-gray-500">
-            <strong>Key Features:</strong>
-            <ul className="list-disc list-inside mt-2 space-y-1">
-              <li>Kanban-style project boards for task management</li>
-              <li>GitHub and GitLab repository integration</li>
-              <li>Code snippet sharing with syntax highlighting</li>
-              <li>Designed to minimize overlap with general club features</li>
-            </ul>
-          </div>
-        </div>
-      </main>
-      
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center text-sm text-gray-500">
-        <span>Nivaro &copy; 2024</span>
-        <span>•</span>
-        <span>Built for Technical Clubs</span>
-      </footer>
+      </div>
     </div>
   );
 }
