@@ -1,102 +1,87 @@
-import Image from "next/image";
+import Link from "next/link";
 
 export default function Home() {
   return (
     <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start max-w-4xl">
+        <div className="text-center sm:text-left">
+          <h1 className="text-4xl font-bold text-gray-900 mb-4">
+            Welcome to Nivaro
+          </h1>
+          <p className="text-xl text-gray-600 mb-8">
+            Club Management Platform with Specialized Project & Code Collaboration Tools
+          </p>
+        </div>
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+        <div className="bg-white rounded-lg shadow-lg p-8 w-full">
+          <h2 className="text-2xl font-semibold text-gray-800 mb-6">
+            🚀 New: Project & Code Collaboration Features
+          </h2>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div className="text-center p-4 border rounded-lg">
+              <div className="text-3xl mb-3">📋</div>
+              <h3 className="font-semibold text-gray-800 mb-2">Kanban Project Board</h3>
+              <p className="text-sm text-gray-600">
+                Organize tasks with To Do, In Progress, and Done columns. 
+                Drag and drop to manage your technical projects efficiently.
+              </p>
+            </div>
+            
+            <div className="text-center p-4 border rounded-lg">
+              <div className="text-3xl mb-3">📁</div>
+              <h3 className="font-semibold text-gray-800 mb-2">Repository Linking</h3>
+              <p className="text-sm text-gray-600">
+                Connect your GitHub and GitLab repositories. 
+                Keep track of all your club&apos;s code projects in one place.
+              </p>
+            </div>
+            
+            <div className="text-center p-4 border rounded-lg">
+              <div className="text-3xl mb-3">💻</div>
+              <h3 className="font-semibold text-gray-800 mb-2">Code Snippet Sharing</h3>
+              <p className="text-sm text-gray-600">
+                Share code snippets with syntax highlighting. 
+                Perfect for tutorials, examples, and team collaboration.
+              </p>
+            </div>
+          </div>
+
+          <div className="text-center">
+            <Link
+              href="/project-collaboration"
+              className="inline-block bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+            >
+              Try Project Collaboration Features
+            </Link>
+          </div>
+        </div>
+
+        <div className="text-center sm:text-left w-full">
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">
+            About Nivaro
+          </h3>
+          <p className="text-gray-600 mb-4">
+            Nivaro is a comprehensive club management platform designed specifically for technical clubs. 
+            Our specialized project and code collaboration features help technical communities work together 
+            more effectively.
+          </p>
+          <div className="text-sm text-gray-500">
+            <strong>Key Features:</strong>
+            <ul className="list-disc list-inside mt-2 space-y-1">
+              <li>Kanban-style project boards for task management</li>
+              <li>GitHub and GitLab repository integration</li>
+              <li>Code snippet sharing with syntax highlighting</li>
+              <li>Designed to minimize overlap with general club features</li>
+            </ul>
+          </div>
         </div>
       </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
+      
+      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center text-sm text-gray-500">
+        <span>Nivaro &copy; 2024</span>
+        <span>•</span>
+        <span>Built for Technical Clubs</span>
       </footer>
     </div>
   );
