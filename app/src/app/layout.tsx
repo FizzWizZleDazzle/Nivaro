@@ -3,8 +3,8 @@ import "./globals.css";
 import Navigation from "@/components/Navigation";
 
 export const metadata: Metadata = {
-  title: "Nivaro - Club Management",
-  description: "Student club management platform",
+  title: "Nivaro - Club Management Platform",
+  description: "A platform for managing clubs and member communities",
 };
 
 export default function RootLayout({

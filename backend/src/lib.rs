@@ -1,20 +1,37 @@
 use worker::*;
 
+mod models;
+mod handlers;
 mod meetings;
+
+use handlers::*;
 use meetings::*;
 
 #[event(fetch)]
-async fn fetch(
-    req: Request,
-    _env: Env,
-    _ctx: Context,
-) -> Result<Response> {
+async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
     console_error_panic_hook::set_once();
     
     let router = Router::new();
     
     router
-        .get("/", |_, _| Response::ok("Nivaro API"))
+        .get("/", |_, _| Response::ok("Nivaro API - Club Management Platform"))
+        
+        // Club endpoints
+        .get_async("/api/clubs", |req, ctx| async move {
+            handle_clubs(req, ctx).await
+        })
+        .get_async("/api/clubs/:id", |req, ctx| async move {
+            handle_clubs(req, ctx).await
+        })
+        .post_async("/api/clubs", |req, ctx| async move {
+            handle_clubs(req, ctx).await
+        })
+        .get_async("/api/clubs/:club_id/members", |req, ctx| async move {
+            handle_members(req, ctx).await
+        })
+        .post_async("/api/members/join", |req, ctx| async move {
+            handle_members(req, ctx).await
+        })
         
         // Meeting endpoints
         .get_async("/api/meetings", |_, _| async move {
@@ -86,6 +103,6 @@ async fn fetch(
             Response::error("Meeting not found", 404)
         })
         
-        .run(req, _env)
+        .run(req, env)
         .await
 }
