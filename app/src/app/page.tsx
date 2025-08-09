@@ -58,6 +58,12 @@ export default function Home() {
               >
                 Help & Mentorship Forum
               </Link>
+              <Link
+                href="/announcements"
+                className="block w-full bg-teal-600 text-white py-2 px-4 rounded-md hover:bg-teal-700 transition-colors"
+              >
+                Announcements & Notifications
+              </Link>
               <Link 
                 href="/club/club-1"
                 className="block w-full bg-gray-600 text-white py-2 px-4 rounded-md hover:bg-gray-700 transition-colors"
