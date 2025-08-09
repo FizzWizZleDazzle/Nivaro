@@ -3,6 +3,7 @@ use worker::*;
 mod models;
 mod handlers;
 mod meetings;
+mod forum;
 
 use handlers::*;
 use meetings::*;
@@ -101,6 +102,31 @@ async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
                 }
             }
             Response::error("Meeting not found", 404)
+        })
+        
+        // Forum endpoints
+        .get_async("/api/forum/questions", |_, _| async move {
+            forum::get_questions().await
+        })
+        .post_async("/api/forum/questions", |req, _| async move {
+            forum::create_question(req).await
+        })
+        .put_async("/api/forum/questions/:id/claim", |req, ctx| async move {
+            if let Some(id) = ctx.param("id") {
+                forum::claim_question(id, req).await
+            } else {
+                Response::error("Invalid question ID", 400)
+            }
+        })
+        .put_async("/api/forum/questions/:id/resolve", |_, ctx| async move {
+            if let Some(id) = ctx.param("id") {
+                forum::resolve_question(id).await
+            } else {
+                Response::error("Invalid question ID", 400)
+            }
+        })
+        .get_async("/api/forum/tags", |_, _| async move {
+            forum::get_tags().await
         })
         
         .run(req, env)
