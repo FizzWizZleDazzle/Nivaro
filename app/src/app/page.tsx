@@ -46,6 +46,12 @@ export default function Home() {
               >
                 Project & Code Collaboration
               </Link>
+              <Link
+                href="/learning"
+                className="block w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 transition-colors"
+              >
+                Learning Center
+              </Link>
               <Link 
                 href="/club/club-1"
                 className="block w-full bg-gray-600 text-white py-2 px-4 rounded-md hover:bg-gray-700 transition-colors"
