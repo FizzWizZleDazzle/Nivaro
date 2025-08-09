@@ -1,58 +1,134 @@
 use worker::*;
 
+mod models;
+mod handlers;
+mod meetings;
 mod forum;
 
+use handlers::*;
+use meetings::*;
+
 #[event(fetch)]
-async fn fetch(
-    req: Request,
-    _env: Env,
-    _ctx: Context,
-) -> Result<Response> {
+async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
     console_error_panic_hook::set_once();
     
-    let url = req.url()?;
-    let path = url.path();
+    let router = Router::new();
     
-    // CORS headers
-    let mut headers = worker::Headers::new();
-    headers.set("Access-Control-Allow-Origin", "*")?;
-    headers.set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")?;
-    headers.set("Access-Control-Allow-Headers", "Content-Type")?;
-    
-    // Handle preflight requests
-    if req.method() == Method::Options {
-        return Ok(Response::empty()?.with_headers(headers));
-    }
-    
-    // Route API requests
-    let response = match (req.method(), path) {
-        (Method::Get, "/api/forum/questions") => forum::get_questions().await,
-        (Method::Post, "/api/forum/questions") => forum::create_question(req).await,
-        (Method::Put, path) if path.starts_with("/api/forum/questions/") && path.ends_with("/claim") => {
-            let id = path.split('/').nth(4).unwrap_or("");
-            forum::claim_question(id, req).await
-        },
-        (Method::Put, path) if path.starts_with("/api/forum/questions/") && path.ends_with("/resolve") => {
-            let id = path.split('/').nth(4).unwrap_or("");
-            forum::resolve_question(id).await
-        },
-        (Method::Get, "/api/forum/tags") => forum::get_tags().await,
-        _ => Response::error("Not Found", 404),
-    };
-    
-    match response {
-        Ok(mut resp) => {
-            for (key, value) in headers.entries() {
-                resp.headers_mut().set(&key, &value)?;
+    router
+        .get("/", |_, _| Response::ok("Nivaro API - Club Management Platform"))
+        
+        // Club endpoints
+        .get_async("/api/clubs", |req, ctx| async move {
+            handle_clubs(req, ctx).await
+        })
+        .get_async("/api/clubs/:id", |req, ctx| async move {
+            handle_clubs(req, ctx).await
+        })
+        .post_async("/api/clubs", |req, ctx| async move {
+            handle_clubs(req, ctx).await
+        })
+        .get_async("/api/clubs/:club_id/members", |req, ctx| async move {
+            handle_members(req, ctx).await
+        })
+        .post_async("/api/members/join", |req, ctx| async move {
+            handle_members(req, ctx).await
+        })
+        
+        // Meeting endpoints
+        .get_async("/api/meetings", |_, _| async move {
+            let meetings = get_meetings().await;
+            Response::from_json(&meetings)
+        })
+        
+        .get_async("/api/meetings/:id", |_, ctx| async move {
+            if let Some(id) = ctx.param("id") {
+                if let Some(meeting) = get_meeting(id).await {
+                    return Response::from_json(&meeting);
+                }
             }
-            Ok(resp)
-        },
-        Err(e) => {
-            let mut error_resp = Response::error(format!("Error: {}", e), 500)?;
-            for (key, value) in headers.entries() {
-                error_resp.headers_mut().set(&key, &value)?;
+            Response::error("Meeting not found", 404)
+        })
+        
+        .post_async("/api/meetings", |mut req, _| async move {
+            match req.json::<CreateMeetingRequest>().await {
+                Ok(meeting_data) => {
+                    let meeting = create_meeting(meeting_data).await;
+                    Response::from_json(&meeting)
+                }
+                Err(_) => Response::error("Invalid request body", 400),
             }
-            Ok(error_resp)
-        }
-    }
+        })
+        
+        .put_async("/api/meetings/:id", |mut req, ctx| async move {
+            if let Some(id) = ctx.param("id") {
+                match req.json::<UpdateMeetingRequest>().await {
+                    Ok(updates) => {
+                        if let Some(meeting) = update_meeting(id, updates).await {
+                            return Response::from_json(&meeting);
+                        }
+                    }
+                    Err(_) => return Response::error("Invalid request body", 400),
+                }
+            }
+            Response::error("Meeting not found", 404)
+        })
+        
+        .delete_async("/api/meetings/:id", |_, ctx| async move {
+            if let Some(id) = ctx.param("id") {
+                if delete_meeting(id).await {
+                    return Response::ok("Meeting deleted");
+                }
+            }
+            Response::error("Meeting not found", 404)
+        })
+        
+        // RSVP endpoints
+        .get_async("/api/meetings/:id/rsvps", |_, ctx| async move {
+            if let Some(id) = ctx.param("id") {
+                let rsvps = get_rsvps(id).await;
+                return Response::from_json(&rsvps);
+            }
+            Response::error("Meeting not found", 404)
+        })
+        
+        .post_async("/api/meetings/:id/rsvps", |mut req, ctx| async move {
+            if let Some(id) = ctx.param("id") {
+                match req.json::<CreateRSVPRequest>().await {
+                    Ok(rsvp_data) => {
+                        let rsvp = create_rsvp(id, rsvp_data).await;
+                        return Response::from_json(&rsvp);
+                    }
+                    Err(_) => return Response::error("Invalid request body", 400),
+                }
+            }
+            Response::error("Meeting not found", 404)
+        })
+        
+        // Forum endpoints
+        .get_async("/api/forum/questions", |_, _| async move {
+            forum::get_questions().await
+        })
+        .post_async("/api/forum/questions", |req, _| async move {
+            forum::create_question(req).await
+        })
+        .put_async("/api/forum/questions/:id/claim", |req, ctx| async move {
+            if let Some(id) = ctx.param("id") {
+                forum::claim_question(id, req).await
+            } else {
+                Response::error("Invalid question ID", 400)
+            }
+        })
+        .put_async("/api/forum/questions/:id/resolve", |_, ctx| async move {
+            if let Some(id) = ctx.param("id") {
+                forum::resolve_question(id).await
+            } else {
+                Response::error("Invalid question ID", 400)
+            }
+        })
+        .get_async("/api/forum/tags", |_, _| async move {
+            forum::get_tags().await
+        })
+        
+        .run(req, env)
+        .await
 }
