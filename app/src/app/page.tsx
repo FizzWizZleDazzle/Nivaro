@@ -32,16 +32,21 @@ export default function Home() {
           </div>
           
           <div className="bg-white p-6 rounded-lg shadow-sm border">
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Demo Club</h3>
-            <p className="text-gray-600 mb-3">
-              Explore the features with our demo club.
-            </p>
-            <Link 
-              href="/club/club-1"
-              className="block w-full bg-gray-600 text-white py-2 px-4 rounded-md hover:bg-gray-700 transition-colors"
-            >
-              View Demo Club
-            </Link>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Quick Links</h3>
+            <div className="space-y-3">
+              <Link 
+                href="/meetings"
+                className="block w-full bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 transition-colors"
+              >
+                View Meetings & Events
+              </Link>
+              <Link 
+                href="/club/club-1"
+                className="block w-full bg-gray-600 text-white py-2 px-4 rounded-md hover:bg-gray-700 transition-colors"
+              >
+                View Demo Club
+              </Link>
+            </div>
           </div>
         </div>
       </div>
