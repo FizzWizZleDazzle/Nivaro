@@ -40,6 +40,12 @@ export default function Home() {
               >
                 View Meetings & Events
               </Link>
+              <Link
+                href="/project-collaboration"
+                className="block w-full bg-purple-600 text-white py-2 px-4 rounded-md hover:bg-purple-700 transition-colors"
+              >
+                Project & Code Collaboration
+              </Link>
               <Link 
                 href="/club/club-1"
                 className="block w-full bg-gray-600 text-white py-2 px-4 rounded-md hover:bg-gray-700 transition-colors"
