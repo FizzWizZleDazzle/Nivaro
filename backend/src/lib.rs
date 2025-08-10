@@ -1,6 +1,6 @@
 use worker::*;
 
-mod models;
+pub mod models;
 mod handlers;
 mod meetings;
 mod forum;
@@ -16,6 +16,47 @@ async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
     
     router
         .get("/", |_, _| Response::ok("Nivaro API - Club Management Platform"))
+        
+        // Auth endpoints
+        .post_async("/api/auth/signup", |req, ctx| async move {
+            handle_auth(req, ctx).await
+        })
+        .post_async("/api/auth/login", |req, ctx| async move {
+            handle_auth(req, ctx).await
+        })
+        .post_async("/api/auth/logout", |req, ctx| async move {
+            handle_auth(req, ctx).await
+        })
+        .post_async("/api/auth/forgot-password", |req, ctx| async move {
+            handle_auth(req, ctx).await
+        })
+        .post_async("/api/auth/reset-password", |req, ctx| async move {
+            handle_auth(req, ctx).await
+        })
+        .post_async("/api/auth/change-password", |req, ctx| async move {
+            handle_auth(req, ctx).await
+        })
+        .post_async("/api/auth/verify-email", |req, ctx| async move {
+            handle_auth(req, ctx).await
+        })
+        .get_async("/api/auth/me", |req, ctx| async move {
+            handle_auth(req, ctx).await
+        })
+        .put_async("/api/auth/profile", |req, ctx| async move {
+            handle_auth(req, ctx).await
+        })
+        .delete_async("/api/auth/account", |req, ctx| async move {
+            handle_auth(req, ctx).await
+        })
+        .post_async("/api/auth/social", |req, ctx| async move {
+            handle_auth(req, ctx).await
+        })
+        .get_async("/api/auth/sessions", |req, ctx| async move {
+            handle_auth(req, ctx).await
+        })
+        .delete_async("/api/auth/sessions", |req, ctx| async move {
+            handle_auth(req, ctx).await
+        })
         
         // Club endpoints
         .get_async("/api/clubs", |req, ctx| async move {

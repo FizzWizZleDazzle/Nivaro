@@ -29,7 +29,7 @@ async fn get_clubs() -> Result<Response> {
         Club {
             id: "club-1".to_string(),
             name: "Tech Innovators".to_string(),
-            description: "A community for technology enthusiasts and innovators".to_string(),
+            description: Some("A community for technology enthusiasts and innovators".to_string()),
             avatar: None,
             created_at: "2024-01-01T00:00:00Z".to_string(),
             updated_at: "2024-01-15T00:00:00Z".to_string(),
@@ -52,7 +52,7 @@ async fn get_club(club_id: &str) -> Result<Response> {
         let club = Club {
             id: "club-1".to_string(),
             name: "Tech Innovators".to_string(),
-            description: "A community for technology enthusiasts and innovators".to_string(),
+            description: Some("A community for technology enthusiasts and innovators".to_string()),
             avatar: None,
             created_at: "2024-01-01T00:00:00Z".to_string(),
             updated_at: "2024-01-15T00:00:00Z".to_string(),

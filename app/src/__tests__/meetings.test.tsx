@@ -160,10 +160,10 @@ const MockMeetingDetail = () => {
       <div data-testid="rsvp-section">
         <h3>RSVP Status: {rsvpStatus}</h3>
         <button onClick={() => handleRSVP('yes')} data-testid="rsvp-yes">
-          Yes, I'll attend
+          Yes, I&apos;ll attend
         </button>
         <button onClick={() => handleRSVP('no')} data-testid="rsvp-no">
-          No, I can't attend
+          No, I can&apos;t attend
         </button>
         <button onClick={() => handleRSVP('maybe')} data-testid="rsvp-maybe">
           Maybe

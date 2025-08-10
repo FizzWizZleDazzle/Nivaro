@@ -39,6 +39,9 @@ async fn get_club_members(club_id: &str) -> Result<Response> {
                     name: "Demo User".to_string(),
                     avatar: None,
                     created_at: "2024-01-01T00:00:00Z".to_string(),
+                    updated_at: "2024-01-01T00:00:00Z".to_string(),
+                    email_verified: true,
+                    is_active: true,
                 },
             },
             Member {
@@ -53,6 +56,9 @@ async fn get_club_members(club_id: &str) -> Result<Response> {
                     name: "Alice Johnson".to_string(),
                     avatar: None,
                     created_at: "2024-01-02T00:00:00Z".to_string(),
+                    updated_at: "2024-01-02T00:00:00Z".to_string(),
+                    email_verified: true,
+                    is_active: true,
                 },
             },
         ];
@@ -91,6 +97,9 @@ async fn join_club(mut req: Request) -> Result<Response> {
                 name: "Demo User".to_string(),
                 avatar: None,
                 created_at: "2024-01-01T00:00:00Z".to_string(),
+                updated_at: "2024-01-01T00:00:00Z".to_string(),
+                email_verified: true,
+                is_active: true,
             },
         };
         
