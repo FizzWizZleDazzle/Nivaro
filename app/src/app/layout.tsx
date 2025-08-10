@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import Navigation from "@/components/Navigation";
 import ClientWrapper from "@/components/ClientWrapper";
+import Footer from "@/components/Footer";
 
 export const metadata: Metadata = {
   title: "Nivaro - Complete Club Management Platform | Meetings, Collaboration & Learning",
@@ -41,10 +42,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className="font-sans antialiased">
+      <body className="font-sans antialiased min-h-screen flex flex-col">
         <ClientWrapper>
           <Navigation />
-          {children}
+          <main className="flex-1">
+            {children}
+          </main>
+          <Footer />
         </ClientWrapper>
       </body>
     </html>

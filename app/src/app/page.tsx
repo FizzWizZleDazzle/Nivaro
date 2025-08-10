@@ -290,6 +290,48 @@ export default function Home() {
             </div>
           </div>
           
+          <div className="bg-white p-6 rounded-lg shadow-sm border">
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Quick Links</h3>
+            <div className="space-y-3">
+              <Link 
+                href="/meetings"
+                className="block w-full bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+              >
+                View Meetings & Events
+              </Link>
+              <Link
+                href="/project-collaboration"
+                className="block w-full bg-purple-600 text-white py-2 px-4 rounded-md hover:bg-purple-700 transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
+              >
+                Project & Code Collaboration
+              </Link>
+              <Link
+                href="/learning"
+                className="block w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+              >
+                Learning Center
+              </Link>
+              <Link
+                href="/forum"
+                className="block w-full bg-orange-600 text-white py-2 px-4 rounded-md hover:bg-orange-700 transition-colors focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2"
+              >
+                Help & Mentorship Forum
+              </Link>
+              <Link
+                href="/announcements"
+                className="block w-full bg-teal-600 text-white py-2 px-4 rounded-md hover:bg-teal-700 transition-colors focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2"
+              >
+                Announcements & Notifications
+              </Link>
+              <Link 
+                href="/club/club-1"
+                className="block w-full bg-gray-600 text-white py-2 px-4 rounded-md hover:bg-gray-700 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
+              >
+                View Demo Club
+              </Link>
+            </div>
+          </div>
+          
           <div className="border-t border-gray-800 mt-12 pt-8 text-center text-gray-400">
             <p>&copy; 2024 Nivaro. All rights reserved. Built with ❤️ for communities worldwide.</p>
           </div>
