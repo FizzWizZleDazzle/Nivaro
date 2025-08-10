@@ -13,7 +13,7 @@ pub struct User {
 pub struct Club {
     pub id: String,
     pub name: String,
-    pub description: String,
+    pub description: Option<String>,
     pub avatar: Option<String>,
     pub created_at: String,
     pub updated_at: String,
@@ -70,12 +70,21 @@ pub struct Announcement {
 }
 
 #[derive(Serialize, Deserialize, Clone)]
+#[serde(rename_all = "lowercase")]
+pub enum ProjectStatus {
+    Planning,
+    Active,
+    Completed,
+    OnHold,
+}
+
+#[derive(Serialize, Deserialize, Clone)]
 pub struct Project {
     pub id: String,
     pub club_id: String,
     pub name: String,
     pub description: String,
-    pub status: String, // planning, active, completed, on-hold
+    pub status: ProjectStatus,
     pub created_by: String,
     pub created_at: String,
     pub updated_at: String,

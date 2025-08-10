@@ -1,5 +1,7 @@
 use worker::*;
 use crate::models::*;
+use chrono::Utc;
+use uuid::Uuid;
 
 pub async fn handle_clubs(req: Request, ctx: RouteContext<()>) -> Result<Response> {
     let method = req.method();
@@ -79,12 +81,12 @@ async fn create_club(mut req: Request) -> Result<Response> {
     
     // Mock club creation - in real app this would save to database
     let club = Club {
-        id: format!("club-{}", js_sys::Date::now() as u64),
+        id: Uuid::new_v4().to_string(),
         name: create_request.name,
-        description: create_request.description,
+        description: Some(create_request.description),
         avatar: None,
-        created_at: js_sys::Date::new_0().to_iso_string().into(),
-        updated_at: js_sys::Date::new_0().to_iso_string().into(),
+        created_at: Utc::now().to_rfc3339(),
+        updated_at: Utc::now().to_rfc3339(),
         owner_id: "user-1".to_string(), // Mock user ID
     };
     

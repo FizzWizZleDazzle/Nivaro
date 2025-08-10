@@ -1,5 +1,7 @@
 use worker::*;
 use crate::models::*;
+use chrono::Utc;
+use uuid::Uuid;
 
 pub async fn handle_members(req: Request, ctx: RouteContext<()>) -> Result<Response> {
     let method = req.method();
@@ -78,11 +80,11 @@ async fn join_club(mut req: Request) -> Result<Response> {
     // Mock invite code validation
     if join_request.invite_code.to_uppercase() == "TECH2024" {
         let member = Member {
-            id: format!("member-{}", js_sys::Date::now() as u64),
+            id: Uuid::new_v4().to_string(),
             user_id: "user-1".to_string(), // Mock current user
             club_id: "club-1".to_string(),
             role: MemberRole::Member,
-            joined_at: js_sys::Date::new_0().to_iso_string().into(),
+            joined_at: Utc::now().to_rfc3339(),
             user: User {
                 id: "user-1".to_string(),
                 email: "demo@nivaro.com".to_string(),

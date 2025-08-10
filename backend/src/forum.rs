@@ -1,5 +1,7 @@
 use worker::*;
 use serde::{Deserialize, Serialize};
+use chrono::Utc;
+use uuid::Uuid;
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct Question {
@@ -127,15 +129,15 @@ pub async fn create_question(mut req: Request) -> Result<Response> {
     let create_req: CreateQuestionRequest = req.json().await?;
     
     let new_question = Question {
-        id: (js_sys::Date::now() as u64).to_string(),
+        id: Uuid::new_v4().to_string(),
         title: create_req.title,
         content: create_req.content,
         author: "currentUser".to_string(), // In real app, get from auth
         tags: create_req.tags,
         status: "open".to_string(),
         claimed_by: None,
-        created_at: js_sys::Date::new_0().to_iso_string().as_string().unwrap(),
-        updated_at: js_sys::Date::new_0().to_iso_string().as_string().unwrap(),
+        created_at: Utc::now().to_rfc3339(),
+        updated_at: Utc::now().to_rfc3339(),
         resolved_at: None,
     };
     

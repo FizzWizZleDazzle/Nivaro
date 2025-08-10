@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct Meeting {
@@ -172,7 +173,7 @@ pub async fn get_meeting(id: &str) -> Option<Meeting> {
 
 pub async fn create_meeting(req: CreateMeetingRequest) -> Meeting {
     let now = chrono::Utc::now().to_rfc3339();
-    let id = format!("{}", chrono::Utc::now().timestamp_millis());
+    let id = Uuid::new_v4().to_string();
     
     Meeting {
         id,
@@ -244,7 +245,7 @@ pub async fn get_rsvps(meeting_id: &str) -> Vec<RSVP> {
 
 pub async fn create_rsvp(meeting_id: &str, req: CreateRSVPRequest) -> RSVP {
     let now = chrono::Utc::now().to_rfc3339();
-    let id = format!("{}", chrono::Utc::now().timestamp_millis());
+    let id = Uuid::new_v4().to_string();
     
     RSVP {
         id,

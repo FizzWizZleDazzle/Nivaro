@@ -17,9 +17,20 @@ export const useForum = () => {
     search: '',
   });
 
+  // Memoize questions with lowercase versions for better search performance
+  const questionsWithLowercaseTags = useMemo(() => {
+    return forumState.questions.map(question => ({
+      ...question,
+      lowercaseTags: question.tags.map(tag => tag.toLowerCase()),
+      lowercaseTitle: question.title.toLowerCase(),
+      lowercaseContent: question.content.toLowerCase(),
+      lowercaseAuthor: question.author.toLowerCase(),
+    }));
+  }, [forumState.questions]);
+
   // Filter questions based on current filters
   const filteredQuestions = useMemo(() => {
-    return forumState.questions.filter((question) => {
+    return questionsWithLowercaseTags.filter((question) => {
       // Status filter
       if (filters.status !== 'all' && question.status !== filters.status) {
         return false;
@@ -34,16 +45,16 @@ export const useForum = () => {
       if (filters.search) {
         const searchLower = filters.search.toLowerCase();
         return (
-          question.title.toLowerCase().includes(searchLower) ||
-          question.content.toLowerCase().includes(searchLower) ||
-          question.author.toLowerCase().includes(searchLower) ||
-          question.tags.some(tag => tag.toLowerCase().includes(searchLower))
+          question.lowercaseTitle.includes(searchLower) ||
+          question.lowercaseContent.includes(searchLower) ||
+          question.lowercaseAuthor.includes(searchLower) ||
+          question.lowercaseTags.some(tag => tag.includes(searchLower))
         );
       }
 
       return true;
     });
-  }, [forumState.questions, filters]);
+  }, [questionsWithLowercaseTags, filters]);
 
   // Calculate question counts for filters
   const questionCounts = useMemo(() => {
