@@ -10,10 +10,13 @@ export default function Navigation() {
   
   const navItems = [
     { href: "/", label: "Home" },
+    { href: "/about", label: "About" },
+    { href: "/pricing", label: "Pricing" },
     { href: "/meetings", label: "Meetings & Events" },
     { href: "/learning", label: "Learning" },
     { href: "/project-collaboration", label: "Projects" },
     { href: "/announcements", label: "Announcements" },
+    { href: "/contact", label: "Contact" },
   ];
 
   const toggleMobileMenu = () => {
