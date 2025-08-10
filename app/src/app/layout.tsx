@@ -3,6 +3,9 @@ import "./globals.css";
 import Navigation from "@/components/Navigation";
 import ClientWrapper from "@/components/ClientWrapper";
 import Footer from "@/components/Footer";
+import { Analytics } from "@/components/Analytics";
+import { CookieConsent } from "@/components/CookieConsent";
+import { generateStructuredData } from "@/components/SEO";
 
 export const metadata: Metadata = {
   title: "Nivaro - Complete Club Management Platform | Meetings, Collaboration & Learning",
@@ -11,16 +14,36 @@ export const metadata: Metadata = {
   authors: [{ name: "Nivaro Team" }],
   creator: "Nivaro",
   publisher: "Nivaro",
+  formatDetection: {
+    email: false,
+    address: false,
+    telephone: false,
+  },
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://nivaro.com'),
+  alternates: {
+    canonical: '/',
+  },
   openGraph: {
     title: "Nivaro - Complete Club Management Platform",
     description: "Transform your club management with Nivaro. Streamline meetings, boost collaboration, enhance learning experiences, and build stronger communities.",
-    type: "website",
-    locale: "en_US",
+    url: process.env.NEXT_PUBLIC_SITE_URL || 'https://nivaro.com',
+    siteName: "Nivaro",
+    images: [
+      {
+        url: '/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'Nivaro - Complete Club Management Platform',
+      },
+    ],
+    locale: 'en_US',
+    type: 'website',
   },
   twitter: {
-    card: "summary_large_image",
+    card: 'summary_large_image',
     title: "Nivaro - Complete Club Management Platform",
     description: "Transform your club management with Nivaro. Streamline meetings, boost collaboration, enhance learning experiences, and build stronger communities.",
+    images: ['/og-image.png'],
   },
   robots: {
     index: true,
@@ -33,6 +56,12 @@ export const metadata: Metadata = {
       'max-snippet': -1,
     },
   },
+  verification: {
+    // Add your verification tokens here when available
+    // google: 'your-google-verification-token',
+    // yandex: 'your-yandex-verification-token',
+    // bing: 'your-bing-verification-token',
+  },
 };
 
 export default function RootLayout({
@@ -40,8 +69,46 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Generate structured data for the website
+  const websiteStructuredData = generateStructuredData('WebSite', {});
+  const organizationStructuredData = generateStructuredData('Organization', {
+    socialLinks: [], // Add your social media links here
+  });
+  const softwareApplicationStructuredData = generateStructuredData('SoftwareApplication', {});
+
   return (
     <html lang="en">
+      <head>
+        {/* Structured Data */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify([
+              websiteStructuredData,
+              organizationStructuredData,
+              softwareApplicationStructuredData,
+            ]),
+          }}
+        />
+        
+        {/* Additional Meta Tags */}
+        <meta name="theme-color" content="#2563eb" />
+        <meta name="msapplication-TileColor" content="#2563eb" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+        <meta name="apple-mobile-web-app-title" content="Nivaro" />
+        
+        {/* Preconnect to external domains for better performance */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        
+        {/* Favicons */}
+        <link rel="icon" href="/favicon.ico" />
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+        
+        {/* Analytics and Performance Monitoring */}
+        <Analytics />
+      </head>
       <body className="font-sans antialiased min-h-screen flex flex-col">
         <ClientWrapper>
           <Navigation />
@@ -50,6 +117,7 @@ export default function RootLayout({
           </main>
           <Footer />
         </ClientWrapper>
+        <CookieConsent />
       </body>
     </html>
   );
