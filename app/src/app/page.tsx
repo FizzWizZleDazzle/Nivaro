@@ -208,6 +208,47 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Onboarding Section */}
+      <section className="py-20 px-4" aria-label="Onboarding options">
+        <div className="max-w-6xl mx-auto">
+          <div className="grid md:grid-cols-2 gap-8">
+            <div className="bg-white p-8 rounded-xl shadow-sm border">
+              <h2 className="text-2xl font-semibold text-gray-900 mb-4">New to Nivaro?</h2>
+              <p className="text-gray-600 mb-6">
+                Get started with our guided onboarding experience to set up your profile and join or create a club.
+              </p>
+              <Link 
+                href="/onboarding"
+                className="block w-full bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors text-center font-medium"
+              >
+                Start Onboarding
+              </Link>
+            </div>
+            
+            <div className="bg-white p-8 rounded-xl shadow-sm border">
+              <h2 className="text-2xl font-semibold text-gray-900 mb-4">Quick Access</h2>
+              <p className="text-gray-600 mb-6">
+                Already familiar with Nivaro? Jump straight to creating or joining a club.
+              </p>
+              <div className="space-y-3">
+                <Link 
+                  href="/onboarding/create"
+                  className="block w-full bg-green-600 text-white py-3 px-6 rounded-lg hover:bg-green-700 transition-colors font-medium text-center"
+                >
+                  Create a Club
+                </Link>
+                <Link 
+                  href="/onboarding/join"
+                  className="block w-full border-2 border-green-600 text-green-600 py-3 px-6 rounded-lg hover:bg-green-50 transition-colors font-medium text-center"
+                >
+                  Join with Invite Code
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* CTA Section */}
       <section className="bg-blue-600 py-20 px-4" aria-label="Call to action">
         <div className="max-w-4xl mx-auto text-center">
