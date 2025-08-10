@@ -45,6 +45,23 @@ export default function JoinClub() {
           <p className="mt-2 text-gray-600">Enter your invite code to get started</p>
         </div>
 
+        {/* Progress indicator */}
+        <div className="flex justify-center">
+          <div className="flex items-center space-x-2">
+            <div className="w-8 h-8 bg-green-500 text-white rounded-full flex items-center justify-center text-sm font-semibold">
+              ✓
+            </div>
+            <div className="w-16 h-1 bg-green-500"></div>
+            <div className="w-8 h-8 bg-green-500 text-white rounded-full flex items-center justify-center text-sm font-semibold">
+              ✓
+            </div>
+            <div className="w-16 h-1 bg-green-500"></div>
+            <div className="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-semibold">
+              3
+            </div>
+          </div>
+        </div>
+
         <div className="bg-white shadow rounded-lg p-6">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
@@ -82,17 +99,17 @@ export default function JoinClub() {
                 {isLoading ? 'Joining...' : 'Join Club'}
               </button>
               <Link
-                href="/"
+                href="/onboarding"
                 className="flex-1 bg-gray-200 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-300 text-center"
               >
-                Cancel
+                Back
               </Link>
             </div>
           </form>
         </div>
 
         <div className="text-center text-sm text-gray-500">
-          Don&apos;t have an invite code?{' '}
+          Step 3 of 3 - Final step! Don&apos;t have an invite code?{' '}
           <Link href="/onboarding/create" className="text-blue-600 hover:text-blue-500">
             Create your own club
           </Link>

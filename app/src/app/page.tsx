@@ -11,20 +11,33 @@ export default function Home() {
         
         <div className="space-y-4">
           <div className="bg-white p-6 rounded-lg shadow-sm border">
-            <h2 className="text-xl font-semibold text-gray-900 mb-3">Getting Started</h2>
+            <h2 className="text-xl font-semibold text-gray-900 mb-3">New to Nivaro?</h2>
             <p className="text-gray-600 mb-4">
-              Create a new club or join an existing one to get started with Nivaro.
+              Get started with our guided onboarding experience to set up your profile and join or create a club.
+            </p>
+            <Link 
+              href="/onboarding"
+              className="block w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors text-center"
+            >
+              Start Onboarding
+            </Link>
+          </div>
+          
+          <div className="bg-white p-6 rounded-lg shadow-sm border">
+            <h2 className="text-xl font-semibold text-gray-900 mb-3">Quick Access</h2>
+            <p className="text-gray-600 mb-4">
+              Already familiar with Nivaro? Jump straight to creating or joining a club.
             </p>
             <div className="space-y-3">
               <Link 
                 href="/onboarding/create"
-                className="block w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors"
+                className="block w-full bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 transition-colors"
               >
                 Create a Club
               </Link>
               <Link 
                 href="/onboarding/join"
-                className="block w-full border border-blue-600 text-blue-600 py-2 px-4 rounded-md hover:bg-blue-50 transition-colors"
+                className="block w-full border border-green-600 text-green-600 py-2 px-4 rounded-md hover:bg-green-50 transition-colors"
               >
                 Join with Invite Code
               </Link>
