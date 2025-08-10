@@ -370,7 +370,9 @@ async fn is_rate_limited(_req: &Request, _action: &str) -> bool {
 }
 
 fn create_jwt_token(user: &User) -> String {
-    // Mock JWT creation - in real app use proper JWT library
+    // JWT token generation placeholder
+    // Requires integration with jsonwebtoken crate for secure token generation
+    // with proper signing keys and expiration handling
     format!("jwt_token_for_{}", user.id)
 }
 

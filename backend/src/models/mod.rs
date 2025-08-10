@@ -13,7 +13,7 @@ pub struct User {
     pub is_active: bool,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct AuthUser {
     pub id: String,
     pub email: String,
@@ -29,7 +29,7 @@ pub struct AuthUser {
     pub locked_until: Option<String>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct Session {
     pub id: String,
     pub user_id: String,
@@ -42,7 +42,7 @@ pub struct Session {
     pub is_active: bool,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct EmailVerification {
     pub id: String,
     pub user_id: String,
@@ -52,7 +52,7 @@ pub struct EmailVerification {
     pub created_at: String,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct PasswordReset {
     pub id: String,
     pub user_id: String,

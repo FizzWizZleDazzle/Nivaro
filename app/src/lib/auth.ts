@@ -94,8 +94,9 @@ export class AuthAPI {
 
     const mergedOptions = { ...defaultOptions, ...options };
     
-    // Add auth token from localStorage if available
-    const token = localStorage.getItem('auth_token');
+    // Auth tokens should be handled via httpOnly cookies for security
+    // Temporary localStorage usage - migrate to secure cookie-based auth
+    const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
     if (token) {
       mergedOptions.headers = {
         ...mergedOptions.headers,
@@ -131,8 +132,8 @@ export class AuthAPI {
       body: JSON.stringify(request),
     }) as AuthResponse;
     
-    // Store token in localStorage
-    if (response.token) {
+    // Store token - should use httpOnly cookies for production
+    if (response.token && typeof window !== 'undefined') {
       localStorage.setItem('auth_token', response.token);
       localStorage.setItem('auth_expires', response.expiresAt || '');
     }
@@ -145,8 +146,10 @@ export class AuthAPI {
       await this.request('/api/auth/logout', { method: 'POST' });
     } finally {
       // Always clear local storage
-      localStorage.removeItem('auth_token');
-      localStorage.removeItem('auth_expires');
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('auth_token');
+        localStorage.removeItem('auth_expires');
+      }
     }
   }
 
@@ -197,8 +200,10 @@ export class AuthAPI {
     }) as { message: string };
     
     // Clear local storage
-    localStorage.removeItem('auth_token');
-    localStorage.removeItem('auth_expires');
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('auth_token');
+      localStorage.removeItem('auth_expires');
+    }
     
     return response;
   }
@@ -209,8 +214,8 @@ export class AuthAPI {
       body: JSON.stringify(request),
     }) as AuthResponse;
     
-    // Store token in localStorage
-    if (response.token) {
+    // Store token - should use httpOnly cookies for production
+    if (response.token && typeof window !== 'undefined') {
       localStorage.setItem('auth_token', response.token);
       localStorage.setItem('auth_expires', response.expiresAt || '');
     }
@@ -229,8 +234,10 @@ export class AuthAPI {
     }) as { message: string };
     
     // Clear local storage
-    localStorage.removeItem('auth_token');
-    localStorage.removeItem('auth_expires');
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('auth_token');
+      localStorage.removeItem('auth_expires');
+    }
     
     return response;
   }
@@ -238,8 +245,8 @@ export class AuthAPI {
 
 // Utility functions
 export function isAuthenticated(): boolean {
-  const token = localStorage.getItem('auth_token');
-  const expires = localStorage.getItem('auth_expires');
+  const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
+  const expires = typeof window !== 'undefined' ? localStorage.getItem('auth_expires') : null;
   
   if (!token || !expires) {
     return false;
@@ -250,14 +257,16 @@ export function isAuthenticated(): boolean {
 
 export function getAuthToken(): string | null {
   if (isAuthenticated()) {
-    return localStorage.getItem('auth_token');
+    return typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
   }
   return null;
 }
 
 export function clearAuth(): void {
-  localStorage.removeItem('auth_token');
-  localStorage.removeItem('auth_expires');
+  if (typeof window !== 'undefined') {
+    localStorage.removeItem('auth_token');
+    localStorage.removeItem('auth_expires');
+  }
 }
 
 export function isStrongPassword(password: string): boolean {
