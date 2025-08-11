@@ -19,3 +19,7 @@ serde_json = "1.0"
 js-sys = "0.3"
 chrono = { version = "0.4", features = ["serde"] }
 uuid = { version = "1.0", features = ["v4"] }
+bcrypt = "0.15"
+jsonwebtoken = "9.2"
+sha2 = "0.10"
+base64 = "0.22"

@@ -7,8 +7,11 @@ describe('Navigation Links', () => {
     render(<Home />)
     
     // Check main heading
-    expect(screen.getByRole('heading', { name: /nivaro/i })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /nivaro/i, level: 1 })).toBeInTheDocument()
     expect(screen.getByText('Club Management Made Simple')).toBeInTheDocument()
+    
+    // Check onboarding link
+    expect(screen.getByRole('link', { name: /start onboarding/i })).toHaveAttribute('href', '/onboarding')
     
     // Check getting started links
     expect(screen.getByRole('link', { name: /create a club/i })).toHaveAttribute('href', '/onboarding/create')
@@ -26,8 +29,11 @@ describe('Navigation Links', () => {
   it('has proper styling classes for navigation links', () => {
     render(<Home />)
     
+    const onboardingLink = screen.getByRole('link', { name: /start onboarding/i })
+    expect(onboardingLink).toHaveClass('bg-blue-600', 'text-white')
+    
     const createClubLink = screen.getByRole('link', { name: /create a club/i })
-    expect(createClubLink).toHaveClass('bg-blue-600', 'text-white')
+    expect(createClubLink).toHaveClass('bg-green-600', 'text-white')
     
     const meetingsLink = screen.getByRole('link', { name: /view meetings & events/i })
     expect(meetingsLink).toHaveClass('bg-green-600', 'text-white')

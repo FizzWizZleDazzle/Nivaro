@@ -1,0 +1,9 @@
+# Open Graph Image Placeholder
+# This file represents where the og-image.png should be placed
+# In a real implementation, you would create a 1200x630 image showing:
+# - Nivaro logo/branding
+# - "Club Management Platform" text
+# - Clean, professional design matching the app's style
+# - Key features like "Meetings, Learning, Collaboration"
+
+echo "OG Image placeholder - replace with actual 1200x630 PNG image"

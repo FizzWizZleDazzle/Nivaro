@@ -4,7 +4,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 global.fetch = jest.fn()
 
 // Mock API response helpers
-const mockFetch = (data: any, ok: boolean = true, status: number = 200) => {
+const mockFetch = (data: unknown, ok: boolean = true, status: number = 200) => {
   return Promise.resolve({
     ok,
     status,
