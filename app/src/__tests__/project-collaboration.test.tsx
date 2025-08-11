@@ -93,8 +93,18 @@ const MockRepositoryLinker = () => {
     { id: '2', name: 'backend-api', url: 'https://github.com/user/backend-api' },
   ])
 
+  // Helper to check for safe URL protocols
+  const isSafeUrl = (url: string) => {
+    try {
+      const parsed = new URL(url, window.location.origin);
+      return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+    } catch {
+      return false;
+    }
+  };
+
   const linkRepository = () => {
-    if (repoUrl.trim()) {
+    if (repoUrl.trim() && isSafeUrl(repoUrl.trim())) {
       const repoName = repoUrl.split('/').pop() || 'repository'
       setLinkedRepos([...linkedRepos, {
         id: Date.now().toString(),
