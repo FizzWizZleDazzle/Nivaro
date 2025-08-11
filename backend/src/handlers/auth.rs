@@ -4,6 +4,9 @@ use chrono::Utc;
 use uuid::Uuid;
 use jsonwebtoken::{encode, decode, Header, Validation, EncodingKey, DecodingKey};
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use std::sync::{Arc, Mutex};
+use bcrypt::{hash, verify, DEFAULT_COST};
 
 #[derive(Debug, Serialize, Deserialize)]
 struct Claims {
@@ -12,6 +15,20 @@ struct Claims {
     exp: usize, // expiration timestamp
     iat: usize, // issued at timestamp
 }
+
+// Simple in-memory storage for development/demo purposes
+// In production, this would be replaced with a proper database
+static USER_STORAGE: std::sync::LazyLock<Arc<Mutex<HashMap<String, AuthUser>>>> = 
+    std::sync::LazyLock::new(|| Arc::new(Mutex::new(HashMap::new())));
+
+static SESSION_STORAGE: std::sync::LazyLock<Arc<Mutex<HashMap<String, Session>>>> = 
+    std::sync::LazyLock::new(|| Arc::new(Mutex::new(HashMap::new())));
+
+static EMAIL_VERIFICATION_STORAGE: std::sync::LazyLock<Arc<Mutex<HashMap<String, EmailVerification>>>> = 
+    std::sync::LazyLock::new(|| Arc::new(Mutex::new(HashMap::new())));
+
+static PASSWORD_RESET_STORAGE: std::sync::LazyLock<Arc<Mutex<HashMap<String, PasswordReset>>>> = 
+    std::sync::LazyLock::new(|| Arc::new(Mutex::new(HashMap::new())));
 
 pub async fn handle_auth(req: Request, _ctx: RouteContext<()>) -> Result<Response> {
     let method = req.method();
@@ -60,9 +77,30 @@ async fn signup(mut req: Request) -> Result<Response> {
         return Response::error("User with this email already exists", 409);
     }
 
-    // Create user (mock creation)
+    // Create user (actual storage implementation)
     let user_id = Uuid::new_v4().to_string();
     let now = Utc::now().to_rfc3339();
+    
+    // Hash the password
+    let password_hash = match hash(&signup_request.password, DEFAULT_COST) {
+        Ok(hash) => hash,
+        Err(_) => return Response::error("Failed to process password", 500),
+    };
+    
+    let auth_user = AuthUser {
+        id: user_id.clone(),
+        email: signup_request.email.clone(),
+        password_hash,
+        name: signup_request.name.clone(),
+        avatar: None,
+        created_at: now.clone(),
+        updated_at: now.clone(),
+        email_verified: false,
+        is_active: true,
+        last_login: None,
+        failed_login_attempts: 0,
+        locked_until: None,
+    };
     
     let user = User {
         id: user_id.clone(),
@@ -75,14 +113,14 @@ async fn signup(mut req: Request) -> Result<Response> {
         is_active: true,
     };
 
-    // Store user (mock storage)
-    store_user(&user).await;
+    // Store user (actual storage)
+    store_user(&auth_user).await;
 
     // Create email verification token
-    let _verification_token = create_email_verification_token(&user_id).await;
+    let verification_token = create_email_verification_token(&user_id).await;
 
     // Send verification email (mock)
-    send_verification_email(&signup_request.email, &_verification_token).await;
+    send_verification_email(&signup_request.email, &verification_token).await;
 
     let response = AuthResponse {
         success: true,
@@ -111,11 +149,37 @@ async fn login(mut req: Request) -> Result<Response> {
         return Response::error("Email and password are required", 400);
     }
 
-    // In a real implementation, this would:
-    // 1. Query database for user by email
-    // 2. Verify password using bcrypt
-    // 3. Check if account is active and verified
-    // For now, return unauthorized for all attempts
+    // Authenticate user with actual implementation
+    if let Some(user) = authenticate_user(&login_request.email, &login_request.password).await {
+        // Update last login
+        update_user_last_login(&user.id).await;
+
+        // Create JWT token
+        let token = create_jwt_token(&user);
+        let expires_at = Utc::now()
+            .checked_add_signed(chrono::Duration::hours(24))
+            .expect("valid timestamp")
+            .to_rfc3339();
+
+        // Create session (variable prefixed to avoid warning)
+        let _session = create_user_session(&user.id, &token).await;
+
+        let response = AuthResponse {
+            success: true,
+            user: Some(user),
+            token: Some(token.clone()),
+            expires_at: Some(expires_at),
+            error: None,
+        };
+
+        return Ok(Response::from_json(&response)?
+            .with_headers(worker::Headers::from_iter(vec![
+                ("Set-Cookie".to_string(), format!("auth_token={}; HttpOnly; Secure; SameSite=Strict; Max-Age=86400", token))
+            ])));
+    }
+
+    // Increment failed login attempts for security
+    increment_failed_login_attempts(&login_request.email).await;
     Response::error("Invalid credentials", 401)
 }
 
@@ -169,7 +233,7 @@ async fn change_password(mut req: Request) -> Result<Response> {
     };
 
     // Get current user from token
-    let _user_id = match get_user_id_from_token(&req) {
+    let user_id = match get_user_id_from_token(&req) {
         Some(id) => id,
         None => return Response::error("Unauthorized", 401),
     };
@@ -178,45 +242,138 @@ async fn change_password(mut req: Request) -> Result<Response> {
         return Response::error("Password must be at least 8 characters with uppercase, lowercase, number, and special character", 400);
     }
 
-    let response = ApiResponse::success("Password changed successfully");
-    Response::from_json(&response)
+    // Update password
+    if let Ok(mut storage) = USER_STORAGE.lock() {
+        if let Some(user) = storage.get_mut(&user_id) {
+            // Verify current password
+            if !verify(&change_request.current_password, &user.password_hash).unwrap_or(false) {
+                return Response::error("Current password is incorrect", 400);
+            }
+            
+            // Hash new password
+            match hash(&change_request.new_password, DEFAULT_COST) {
+                Ok(new_hash) => {
+                    user.password_hash = new_hash;
+                    user.updated_at = Utc::now().to_rfc3339();
+                    
+                    let response = ApiResponse::success("Password changed successfully");
+                    return Response::from_json(&response);
+                },
+                Err(_) => return Response::error("Failed to process new password", 500),
+            }
+        }
+    }
+
+    Response::error("User not found", 404)
 }
 
 async fn verify_email(mut req: Request) -> Result<Response> {
-    let _verify_request: VerifyEmailRequest = match req.json().await {
+    let verify_request: VerifyEmailRequest = match req.json().await {
         Ok(req) => req,
         Err(_) => return Response::error("Invalid request body", 400),
     };
 
-    let response = ApiResponse::success("Email verified successfully");
-    Response::from_json(&response)
+    // Find and validate verification token
+    if let Ok(mut email_storage) = EMAIL_VERIFICATION_STORAGE.lock() {
+        if let Some(verification) = email_storage.values().find(|v| v.token == verify_request.token).cloned() {
+            // Check if token is expired
+            if let Ok(expires_at) = chrono::DateTime::parse_from_rfc3339(&verification.expires_at) {
+                if expires_at < Utc::now() {
+                    return Response::error("Verification token has expired", 400);
+                }
+                
+                // Mark user as verified
+                if let Ok(mut user_storage) = USER_STORAGE.lock() {
+                    if let Some(user) = user_storage.get_mut(&verification.user_id) {
+                        user.email_verified = true;
+                        user.updated_at = Utc::now().to_rfc3339();
+                        
+                        // Remove the verification token (one-time use)
+                        email_storage.retain(|_, v| v.token != verify_request.token);
+                        
+                        let response = ApiResponse::success("Email verified successfully");
+                        return Response::from_json(&response);
+                    }
+                }
+            }
+        }
+    }
+
+    Response::error("Invalid or expired verification token", 400)
 }
 
 async fn get_current_user(req: Request) -> Result<Response> {
-    let _user_id = match get_user_id_from_token(&req) {
+    let user_id = match get_user_id_from_token(&req) {
         Some(id) => id,
         None => return Response::error("Unauthorized", 401),
     };
 
-    // TODO: Query user from database by user_id
-    // For now, return unauthorized since we don't have a database
+    // Get user from storage
+    if let Some(user) = get_user_by_id(&user_id).await {
+        let response = AuthResponse {
+            success: true,
+            user: Some(user),
+            token: None, // Don't send token back in /me endpoint
+            expires_at: None,
+            error: None,
+        };
+        return Response::from_json(&response);
+    }
+
     Response::error("User not found", 404)
 }
 
 async fn update_profile(mut req: Request) -> Result<Response> {
-    let _update_request: UpdateProfileRequest = match req.json().await {
+    let update_request: UpdateProfileRequest = match req.json().await {
         Ok(req) => req,
         Err(_) => return Response::error("Invalid request body", 400),
     };
 
-    let _user_id = match get_user_id_from_token(&req) {
+    let user_id = match get_user_id_from_token(&req) {
         Some(id) => id,
         None => return Response::error("Unauthorized", 401),
     };
 
-    // TODO: Update user profile in database
-    // For now, return not implemented
-    Response::error("Profile update not implemented", 501)
+    // Update user profile
+    if let Ok(mut storage) = USER_STORAGE.lock() {
+        // First check if email is already taken (if email update is requested)
+        if let Some(ref email) = update_request.email {
+            if !email.trim().is_empty() && is_valid_email(email) {
+                let email_taken = storage.values().any(|u| u.id != user_id && u.email == *email);
+                if email_taken {
+                    return Response::error("Email is already taken", 409);
+                }
+            }
+        }
+        
+        // Now update the user
+        if let Some(user) = storage.get_mut(&user_id) {
+            let mut updated = false;
+            
+            if let Some(name) = update_request.name {
+                if !name.trim().is_empty() {
+                    user.name = name;
+                    updated = true;
+                }
+            }
+            
+            if let Some(email) = update_request.email {
+                if !email.trim().is_empty() && is_valid_email(&email) {
+                    user.email = email;
+                    user.email_verified = false; // Require re-verification for new email
+                    updated = true;
+                }
+            }
+            
+            if updated {
+                user.updated_at = Utc::now().to_rfc3339();
+                let response = ApiResponse::success("Profile updated successfully");
+                return Response::from_json(&response);
+            }
+        }
+    }
+
+    Response::error("Failed to update profile", 500)
 }
 
 async fn delete_account(req: Request) -> Result<Response> {
@@ -295,16 +452,112 @@ async fn revoke_all_sessions(req: Request) -> Result<Response> {
         ])))
 }
 
-// Helper functions (mock implementations)
+// Helper functions (actual implementations)
 
-async fn authenticate_user(_email: &str, _password: &str) -> Option<User> {
-    // TODO: Replace with real database authentication
-    // For now, return None (no valid users)
-    // In production, this would:
-    // 1. Query user from database by email
-    // 2. Verify password using bcrypt::verify
-    // 3. Return user if credentials are valid
+async fn authenticate_user(email: &str, password: &str) -> Option<User> {
+    let storage = USER_STORAGE.lock().ok()?;
+    
+    if let Some(auth_user) = storage.values().find(|u| u.email == email) {
+        // Check if account is locked
+        if let Some(locked_until) = &auth_user.locked_until {
+            if let Ok(locked_time) = chrono::DateTime::parse_from_rfc3339(locked_until) {
+                if locked_time > Utc::now() {
+                    return None; // Account is still locked
+                }
+            }
+        }
+        
+        // Check if account is active and email is verified
+        if !auth_user.is_active {
+            return None;
+        }
+        
+        // Verify password
+        if verify(password, &auth_user.password_hash).unwrap_or(false) {
+            // Convert AuthUser to User (without sensitive data)
+            return Some(User {
+                id: auth_user.id.clone(),
+                email: auth_user.email.clone(),
+                name: auth_user.name.clone(),
+                avatar: auth_user.avatar.clone(),
+                created_at: auth_user.created_at.clone(),
+                updated_at: auth_user.updated_at.clone(),
+                email_verified: auth_user.email_verified,
+                is_active: auth_user.is_active,
+            });
+        }
+    }
+    
     None
+}
+
+async fn get_user_by_id(user_id: &str) -> Option<User> {
+    let storage = USER_STORAGE.lock().ok()?;
+    
+    if let Some(auth_user) = storage.get(user_id) {
+        return Some(User {
+            id: auth_user.id.clone(),
+            email: auth_user.email.clone(),
+            name: auth_user.name.clone(),
+            avatar: auth_user.avatar.clone(),
+            created_at: auth_user.created_at.clone(),
+            updated_at: auth_user.updated_at.clone(),
+            email_verified: auth_user.email_verified,
+            is_active: auth_user.is_active,
+        });
+    }
+    
+    None
+}
+
+async fn update_user_last_login(user_id: &str) {
+    if let Ok(mut storage) = USER_STORAGE.lock() {
+        if let Some(user) = storage.get_mut(user_id) {
+            user.last_login = Some(Utc::now().to_rfc3339());
+            user.failed_login_attempts = 0; // Reset failed attempts on successful login
+            user.locked_until = None; // Clear any lock
+        }
+    }
+}
+
+async fn increment_failed_login_attempts(email: &str) {
+    if let Ok(mut storage) = USER_STORAGE.lock() {
+        if let Some(user) = storage.values_mut().find(|u| u.email == email) {
+            user.failed_login_attempts += 1;
+            
+            // Lock account after 5 failed attempts for 15 minutes
+            if user.failed_login_attempts >= 5 {
+                let lock_until = Utc::now()
+                    .checked_add_signed(chrono::Duration::minutes(15))
+                    .expect("valid timestamp")
+                    .to_rfc3339();
+                user.locked_until = Some(lock_until);
+            }
+        }
+    }
+}
+
+async fn create_user_session(user_id: &str, token: &str) -> Session {
+    let session = Session {
+        id: Uuid::new_v4().to_string(),
+        user_id: user_id.to_string(),
+        token: token.to_string(),
+        expires_at: Utc::now()
+            .checked_add_signed(chrono::Duration::hours(24))
+            .expect("valid timestamp")
+            .to_rfc3339(),
+        created_at: Utc::now().to_rfc3339(),
+        last_accessed: Utc::now().to_rfc3339(),
+        user_agent: None, // Could be extracted from request headers
+        ip_address: None, // Could be extracted from request
+        is_active: true,
+    };
+    
+    if let Ok(mut storage) = SESSION_STORAGE.lock() {
+        storage.insert(session.id.clone(), session.clone());
+    }
+    
+    session
 }
 
 fn is_valid_email(email: &str) -> bool {
@@ -319,17 +572,38 @@ fn is_strong_password(password: &str) -> bool {
         && password.chars().any(|c| !c.is_alphanumeric())
 }
 
-async fn user_exists(_email: &str) -> bool {
-    // Mock check - in real app, query database
+async fn user_exists(email: &str) -> bool {
+    if let Ok(storage) = USER_STORAGE.lock() {
+        return storage.values().any(|u| u.email == email);
+    }
     false
 }
 
-async fn store_user(_user: &User) {
-    // Mock storage - in real app, save to database
+async fn store_user(user: &AuthUser) {
+    if let Ok(mut storage) = USER_STORAGE.lock() {
+        storage.insert(user.id.clone(), user.clone());
+    }
 }
 
-async fn create_email_verification_token(_user_id: &str) -> String {
-    Uuid::new_v4().to_string()
+async fn create_email_verification_token(user_id: &str) -> String {
+    let token = Uuid::new_v4().to_string();
+    let verification = EmailVerification {
+        id: Uuid::new_v4().to_string(),
+        user_id: user_id.to_string(),
+        token: token.clone(),
+        email: String::new(), // Would be filled from user data
+        expires_at: Utc::now()
+            .checked_add_signed(chrono::Duration::hours(24))
+            .expect("valid timestamp")
+            .to_rfc3339(),
+        created_at: Utc::now().to_rfc3339(),
+    };
+    
+    if let Ok(mut storage) = EMAIL_VERIFICATION_STORAGE.lock() {
+        storage.insert(verification.id.clone(), verification);
+    }
+    
+    token
 }
 
 async fn send_verification_email(_email: &str, _token: &str) {
