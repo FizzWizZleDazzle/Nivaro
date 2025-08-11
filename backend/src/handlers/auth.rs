@@ -2,6 +2,16 @@ use worker::*;
 use crate::models::*;
 use chrono::Utc;
 use uuid::Uuid;
+use jsonwebtoken::{encode, decode, Header, Validation, EncodingKey, DecodingKey};
+use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Serialize, Deserialize)]
+struct Claims {
+    sub: String, // user id
+    email: String,
+    exp: usize, // expiration timestamp
+    iat: usize, // issued at timestamp
+}
 
 pub async fn handle_auth(req: Request, _ctx: RouteContext<()>) -> Result<Response> {
     let method = req.method();
@@ -96,41 +106,16 @@ async fn login(mut req: Request) -> Result<Response> {
         return Response::error("Too many login attempts. Please try again later", 429);
     }
 
-    // Mock authentication - accept demo@nivaro.com with password123
-    if login_request.email == "demo@nivaro.com" && login_request.password == "password123" {
-        let now = Utc::now().to_rfc3339();
-        let user = User {
-            id: "user-1".to_string(),
-            email: "demo@nivaro.com".to_string(),
-            name: "Demo User".to_string(),
-            avatar: None,
-            created_at: now.clone(),
-            updated_at: now,
-            email_verified: true,
-            is_active: true,
-        };
-
-        // Create mock JWT token
-        let token = create_jwt_token(&user);
-        let expires_at = Utc::now()
-            .checked_add_signed(chrono::Duration::hours(24))
-            .expect("valid timestamp")
-            .to_rfc3339();
-
-        let response = AuthResponse {
-            success: true,
-            user: Some(user),
-            token: Some(token.clone()),
-            expires_at: Some(expires_at),
-            error: None,
-        };
-
-        return Ok(Response::from_json(&response)?
-            .with_headers(worker::Headers::from_iter(vec![
-                ("Set-Cookie".to_string(), format!("auth_token={}; HttpOnly; Secure; SameSite=Strict; Max-Age=86400", token))
-            ])));
+    // Basic validation
+    if login_request.email.is_empty() || login_request.password.is_empty() {
+        return Response::error("Email and password are required", 400);
     }
 
+    // In a real implementation, this would:
+    // 1. Query database for user by email
+    // 2. Verify password using bcrypt
+    // 3. Check if account is active and verified
+    // For now, return unauthorized for all attempts
     Response::error("Invalid credentials", 401)
 }
 
@@ -213,25 +198,13 @@ async fn get_current_user(req: Request) -> Result<Response> {
         None => return Response::error("Unauthorized", 401),
     };
 
-    // Mock user return
-    let now = Utc::now().to_rfc3339();
-    let user = User {
-        id: "user-1".to_string(),
-        email: "demo@nivaro.com".to_string(),
-        name: "Demo User".to_string(),
-        avatar: None,
-        created_at: now.clone(),
-        updated_at: now,
-        email_verified: true,
-        is_active: true,
-    };
-
-    let response = ApiResponse::success(user);
-    Response::from_json(&response)
+    // TODO: Query user from database by user_id
+    // For now, return unauthorized since we don't have a database
+    Response::error("User not found", 404)
 }
 
 async fn update_profile(mut req: Request) -> Result<Response> {
-    let update_request: UpdateProfileRequest = match req.json().await {
+    let _update_request: UpdateProfileRequest = match req.json().await {
         Ok(req) => req,
         Err(_) => return Response::error("Invalid request body", 400),
     };
@@ -241,21 +214,9 @@ async fn update_profile(mut req: Request) -> Result<Response> {
         None => return Response::error("Unauthorized", 401),
     };
 
-    // Mock profile update
-    let now = Utc::now().to_rfc3339();
-    let updated_user = User {
-        id: "user-1".to_string(),
-        email: update_request.email.unwrap_or("demo@nivaro.com".to_string()),
-        name: update_request.name.unwrap_or("Demo User".to_string()),
-        avatar: None,
-        created_at: now.clone(),
-        updated_at: now,
-        email_verified: true,
-        is_active: true,
-    };
-
-    let response = ApiResponse::success(updated_user);
-    Response::from_json(&response)
+    // TODO: Update user profile in database
+    // For now, return not implemented
+    Response::error("Profile update not implemented", 501)
 }
 
 async fn delete_account(req: Request) -> Result<Response> {
@@ -335,6 +296,17 @@ async fn revoke_all_sessions(req: Request) -> Result<Response> {
 }
 
 // Helper functions (mock implementations)
+
+async fn authenticate_user(_email: &str, _password: &str) -> Option<User> {
+    // TODO: Replace with real database authentication
+    // For now, return None (no valid users)
+    // In production, this would:
+    // 1. Query user from database by email
+    // 2. Verify password using bcrypt::verify
+    // 3. Return user if credentials are valid
+    None
+}
+
 fn is_valid_email(email: &str) -> bool {
     email.contains('@') && email.contains('.')
 }
@@ -370,10 +342,22 @@ async fn is_rate_limited(_req: &Request, _action: &str) -> bool {
 }
 
 fn create_jwt_token(user: &User) -> String {
-    // JWT token generation placeholder
-    // Requires integration with jsonwebtoken crate for secure token generation
-    // with proper signing keys and expiration handling
-    format!("jwt_token_for_{}", user.id)
+    // TODO: Use environment variable for JWT secret in production
+    let secret = "your-256-bit-secret-key-change-this-in-production";
+    let encoding_key = EncodingKey::from_secret(secret.as_ref());
+    
+    let now = Utc::now();
+    let expires_at = now + chrono::Duration::hours(24);
+    
+    let claims = Claims {
+        sub: user.id.clone(),
+        email: user.email.clone(),
+        exp: expires_at.timestamp() as usize,
+        iat: now.timestamp() as usize,
+    };
+    
+    encode(&Header::default(), &claims, &encoding_key)
+        .unwrap_or_else(|_| format!("fallback_token_for_{}", user.id))
 }
 
 fn extract_token(req: &Request) -> Option<String> {
@@ -398,8 +382,15 @@ fn extract_token(req: &Request) -> Option<String> {
 }
 
 fn get_user_id_from_token(req: &Request) -> Option<String> {
-    let _token = extract_token(req)?;
+    let token = extract_token(req)?;
     
-    // Mock token validation - in real app decode JWT
-    Some("user-1".to_string())
+    // TODO: Use environment variable for JWT secret in production
+    let secret = "your-256-bit-secret-key-change-this-in-production";
+    let decoding_key = DecodingKey::from_secret(secret.as_ref());
+    let validation = Validation::default();
+    
+    match decode::<Claims>(&token, &decoding_key, &validation) {
+        Ok(token_data) => Some(token_data.claims.sub),
+        Err(_) => None, // Invalid or expired token
+    }
 }
