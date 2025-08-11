@@ -29,7 +29,7 @@ pub struct AuthUser {
     pub locked_until: Option<String>,
 }
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Session {
     pub id: String,
     pub user_id: String,
