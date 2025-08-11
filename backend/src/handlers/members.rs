@@ -1,11 +1,11 @@
-use worker::*;
 use crate::models::*;
 use chrono::Utc;
 use uuid::Uuid;
+use worker::*;
 
 pub async fn handle_members(req: Request, ctx: RouteContext<()>) -> Result<Response> {
     let method = req.method();
-    
+
     match method {
         Method::Get => {
             // Get members for a club
@@ -14,12 +14,12 @@ pub async fn handle_members(req: Request, ctx: RouteContext<()>) -> Result<Respo
             } else {
                 Response::error("Club ID required", 400)
             }
-        },
+        }
         Method::Post => {
             // Join club with invite code
             join_club(req).await
-        },
-        _ => Response::error("Method not allowed", 405)
+        }
+        _ => Response::error("Method not allowed", 405),
     }
 }
 
@@ -62,13 +62,13 @@ async fn get_club_members(club_id: &str) -> Result<Response> {
                 },
             },
         ];
-        
+
         let response = ApiResponse {
             success: true,
             data: Some(members),
             error: None,
         };
-        
+
         Response::from_json(&response)
     } else {
         let response: ApiResponse<Vec<Member>> = ApiResponse {
@@ -82,7 +82,7 @@ async fn get_club_members(club_id: &str) -> Result<Response> {
 
 async fn join_club(mut req: Request) -> Result<Response> {
     let join_request: JoinClubRequest = req.json().await?;
-    
+
     // Mock invite code validation
     if join_request.invite_code.to_uppercase() == "TECH2024" {
         let member = Member {
@@ -102,13 +102,13 @@ async fn join_club(mut req: Request) -> Result<Response> {
                 is_active: true,
             },
         };
-        
+
         let response = ApiResponse {
             success: true,
             data: Some(member),
             error: None,
         };
-        
+
         Ok(Response::from_json(&response)?.with_status(201))
     } else {
         let response: ApiResponse<Member> = ApiResponse {

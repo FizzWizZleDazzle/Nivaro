@@ -1,9 +1,9 @@
 use worker::*;
 
-pub mod models;
+mod forum;
 mod handlers;
 mod meetings;
-mod forum;
+pub mod models;
 
 use handlers::*;
 use meetings::*;
@@ -11,12 +11,13 @@ use meetings::*;
 #[event(fetch)]
 async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
     console_error_panic_hook::set_once();
-    
+
     let router = Router::new();
-    
+
     router
-        .get("/", |_, _| Response::ok("Nivaro API - Club Management Platform"))
-        
+        .get("/", |_, _| {
+            Response::ok("Nivaro API - Club Management Platform")
+        })
         // Auth endpoints
         .post_async("/api/auth/signup", |req, ctx| async move {
             handle_auth(req, ctx).await
@@ -57,7 +58,6 @@ async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
         .delete_async("/api/auth/sessions", |req, ctx| async move {
             handle_auth(req, ctx).await
         })
-        
         // Club endpoints
         .get_async("/api/clubs", |req, ctx| async move {
             handle_clubs(req, ctx).await
@@ -74,13 +74,11 @@ async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
         .post_async("/api/members/join", |req, ctx| async move {
             handle_members(req, ctx).await
         })
-        
         // Meeting endpoints
         .get_async("/api/meetings", |_, _| async move {
             let meetings = get_meetings().await;
             Response::from_json(&meetings)
         })
-        
         .get_async("/api/meetings/:id", |_, ctx| async move {
             if let Some(id) = ctx.param("id") {
                 if let Some(meeting) = get_meeting(id).await {
@@ -89,7 +87,6 @@ async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
             }
             Response::error("Meeting not found", 404)
         })
-        
         .post_async("/api/meetings", |mut req, _| async move {
             match req.json::<CreateMeetingRequest>().await {
                 Ok(meeting_data) => {
@@ -99,7 +96,6 @@ async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
                 Err(_) => Response::error("Invalid request body", 400),
             }
         })
-        
         .put_async("/api/meetings/:id", |mut req, ctx| async move {
             if let Some(id) = ctx.param("id") {
                 match req.json::<UpdateMeetingRequest>().await {
@@ -113,7 +109,6 @@ async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
             }
             Response::error("Meeting not found", 404)
         })
-        
         .delete_async("/api/meetings/:id", |_, ctx| async move {
             if let Some(id) = ctx.param("id") {
                 if delete_meeting(id).await {
@@ -122,7 +117,6 @@ async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
             }
             Response::error("Meeting not found", 404)
         })
-        
         // RSVP endpoints
         .get_async("/api/meetings/:id/rsvps", |_, ctx| async move {
             if let Some(id) = ctx.param("id") {
@@ -131,7 +125,6 @@ async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
             }
             Response::error("Meeting not found", 404)
         })
-        
         .post_async("/api/meetings/:id/rsvps", |mut req, ctx| async move {
             if let Some(id) = ctx.param("id") {
                 match req.json::<CreateRSVPRequest>().await {
@@ -144,7 +137,6 @@ async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
             }
             Response::error("Meeting not found", 404)
         })
-        
         // Forum endpoints
         .get_async("/api/forum/questions", |_, _| async move {
             forum::get_questions().await
@@ -166,10 +158,10 @@ async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
                 Response::error("Invalid question ID", 400)
             }
         })
-        .get_async("/api/forum/tags", |_, _| async move {
-            forum::get_tags().await
-        })
-        
+        .get_async(
+            "/api/forum/tags",
+            |_, _| async move { forum::get_tags().await },
+        )
         .run(req, env)
         .await
 }

@@ -174,7 +174,7 @@ pub async fn get_meeting(id: &str) -> Option<Meeting> {
 pub async fn create_meeting(req: CreateMeetingRequest) -> Meeting {
     let now = chrono::Utc::now().to_rfc3339();
     let id = Uuid::new_v4().to_string();
-    
+
     Meeting {
         id,
         title: req.title,
@@ -240,13 +240,16 @@ pub async fn delete_meeting(id: &str) -> bool {
 }
 
 pub async fn get_rsvps(meeting_id: &str) -> Vec<RSVP> {
-    get_mock_rsvps().into_iter().filter(|r| r.meeting_id == meeting_id).collect()
+    get_mock_rsvps()
+        .into_iter()
+        .filter(|r| r.meeting_id == meeting_id)
+        .collect()
 }
 
 pub async fn create_rsvp(meeting_id: &str, req: CreateRSVPRequest) -> RSVP {
     let now = chrono::Utc::now().to_rfc3339();
     let id = Uuid::new_v4().to_string();
-    
+
     RSVP {
         id,
         meeting_id: meeting_id.to_string(),
