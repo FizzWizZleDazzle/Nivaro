@@ -5,6 +5,11 @@ const nextConfig: NextConfig = {
     // Only lint the files I've modified, ignore existing issues in other files
     ignoreDuringBuilds: true,
   },
+  output: "export",
+  trailingSlash: true,
+  images: {
+    unoptimized: true,
+  },
 };
 
 export default nextConfig;
