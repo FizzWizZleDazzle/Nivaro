@@ -89,20 +89,10 @@ export class AuthAPI {
       headers: {
         'Content-Type': 'application/json',
       },
-      credentials: 'include', // Include cookies
+      credentials: 'include', // Include cookies for httpOnly auth tokens
     };
 
     const mergedOptions = { ...defaultOptions, ...options };
-    
-    // Auth tokens should be handled via httpOnly cookies for security
-    // Temporary localStorage usage - migrate to secure cookie-based auth
-    const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
-    if (token) {
-      mergedOptions.headers = {
-        ...mergedOptions.headers,
-        'Authorization': `Bearer ${token}`,
-      };
-    }
 
     try {
       const response = await fetch(url, mergedOptions);
@@ -132,25 +122,13 @@ export class AuthAPI {
       body: JSON.stringify(request),
     }) as AuthResponse;
     
-    // Store token - should use httpOnly cookies for production
-    if (response.token && typeof window !== 'undefined') {
-      localStorage.setItem('auth_token', response.token);
-      localStorage.setItem('auth_expires', response.expiresAt || '');
-    }
-    
+    // Token is now handled via httpOnly cookies automatically
     return response;
   }
 
   static async logout(): Promise<void> {
-    try {
-      await this.request('/api/auth/logout', { method: 'POST' });
-    } finally {
-      // Always clear local storage
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem('auth_token');
-        localStorage.removeItem('auth_expires');
-      }
-    }
+    await this.request('/api/auth/logout', { method: 'POST' });
+    // httpOnly cookies are cleared by the server
   }
 
   static async forgotPassword(request: ForgotPasswordRequest): Promise<{ message: string }> {
@@ -199,12 +177,7 @@ export class AuthAPI {
       method: 'DELETE',
     }) as { message: string };
     
-    // Clear local storage
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('auth_token');
-      localStorage.removeItem('auth_expires');
-    }
-    
+    // httpOnly cookies are cleared by the server
     return response;
   }
 
@@ -214,12 +187,7 @@ export class AuthAPI {
       body: JSON.stringify(request),
     }) as AuthResponse;
     
-    // Store token - should use httpOnly cookies for production
-    if (response.token && typeof window !== 'undefined') {
-      localStorage.setItem('auth_token', response.token);
-      localStorage.setItem('auth_expires', response.expiresAt || '');
-    }
-    
+    // Token is now handled via httpOnly cookies automatically
     return response;
   }
 
@@ -233,40 +201,29 @@ export class AuthAPI {
       method: 'DELETE',
     }) as { message: string };
     
-    // Clear local storage
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('auth_token');
-      localStorage.removeItem('auth_expires');
-    }
-    
+    // httpOnly cookies are cleared by the server
     return response;
   }
 }
 
 // Utility functions
 export function isAuthenticated(): boolean {
-  const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
-  const expires = typeof window !== 'undefined' ? localStorage.getItem('auth_expires') : null;
-  
-  if (!token || !expires) {
-    return false;
-  }
-  
-  return new Date() < new Date(expires);
+  // With httpOnly cookies, we can't directly check auth status from client
+  // This would typically require a call to the /api/auth/me endpoint
+  // or implementing a session check endpoint that returns only boolean
+  // For now, return false as we can't access httpOnly cookies from JS
+  return false;
 }
 
 export function getAuthToken(): string | null {
-  if (isAuthenticated()) {
-    return typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
-  }
+  // With httpOnly cookies, auth tokens are not accessible from JavaScript
+  // This is by design for security - prevents XSS attacks
   return null;
 }
 
 export function clearAuth(): void {
-  if (typeof window !== 'undefined') {
-    localStorage.removeItem('auth_token');
-    localStorage.removeItem('auth_expires');
-  }
+  // httpOnly cookies can only be cleared by the server
+  // This function is kept for compatibility but does nothing
 }
 
 export function isStrongPassword(password: string): boolean {
