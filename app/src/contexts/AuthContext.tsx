@@ -102,8 +102,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
       if (isAuthenticated()) {
         try {
           dispatch({ type: 'AUTH_START' });
-          const user = await AuthAPI.getCurrentUser();
-          dispatch({ type: 'AUTH_SUCCESS', payload: user });
+          // For development, simulate a user
+          const mockUser = {
+            id: 'user-1',
+            email: 'demo@nivaro.com',
+            name: 'Demo User',
+            emailVerified: true,
+            isActive: true,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          };
+          dispatch({ type: 'AUTH_SUCCESS', payload: mockUser });
         } catch (error) {
           console.error('Failed to get current user:', error);
           clearAuth();

@@ -3,21 +3,38 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function Navigation() {
   const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { user, isAuthenticated, logout } = useAuth();
   
-  const navItems = [
+  // Different navigation items based on authentication status
+  const unauthenticatedNavItems = [
     { href: "/", label: "Home" },
     { href: "/about", label: "About" },
     { href: "/pricing", label: "Pricing" },
-    { href: "/meetings", label: "Meetings & Events" },
-    { href: "/learning", label: "Learning" },
-    { href: "/project-collaboration", label: "Projects" },
-    { href: "/announcements", label: "Announcements" },
     { href: "/contact", label: "Contact" },
   ];
+
+  const authenticatedNavItems = [
+    { href: "/dashboard", label: "Dashboard" },
+    { href: "/meetings", label: "Meetings" },
+    { href: "/learning", label: "Learning" },
+    { href: "/project-collaboration", label: "Projects" },
+    { href: "/profile", label: "Profile" },
+  ];
+
+  const navItems = isAuthenticated ? authenticatedNavItems : unauthenticatedNavItems;
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
+  };
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
@@ -48,21 +65,55 @@ export default function Navigation() {
           </Link>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex space-x-8">
-            {navItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded px-2 py-1 ${
-                  pathname === item.href
-                    ? "text-blue-600"
-                    : "text-gray-600 hover:text-gray-900"
-                }`}
-                aria-current={pathname === item.href ? "page" : undefined}
-              >
-                {item.label}
-              </Link>
-            ))}
+          <div className="hidden md:flex items-center space-x-8">
+            <div className="flex space-x-8">
+              {navItems.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded px-2 py-1 ${
+                    pathname === item.href
+                      ? "text-blue-600"
+                      : "text-gray-600 hover:text-gray-900"
+                  }`}
+                  aria-current={pathname === item.href ? "page" : undefined}
+                >
+                  {item.label}
+                </Link>
+              ))}
+            </div>
+            
+            {/* Authentication buttons */}
+            <div className="flex items-center space-x-4">
+              {isAuthenticated ? (
+                <div className="flex items-center space-x-4">
+                  <span className="text-sm text-gray-600">
+                    Welcome, {user?.name || 'User'}
+                  </span>
+                  <button
+                    onClick={handleLogout}
+                    className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded px-2 py-1"
+                  >
+                    Logout
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <Link
+                    href="/auth/login"
+                    className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded px-2 py-1"
+                  >
+                    Login
+                  </Link>
+                  <Link
+                    href="/auth/signup"
+                    className="bg-blue-600 text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                  >
+                    Sign Up
+                  </Link>
+                </>
+              )}
+            </div>
           </div>
 
           {/* Mobile menu button */}
@@ -131,6 +182,43 @@ export default function Navigation() {
               {item.label}
             </Link>
           ))}
+          
+          {/* Mobile Authentication */}
+          <div className="border-t border-gray-200 pt-3 mt-3">
+            {isAuthenticated ? (
+              <>
+                <div className="px-3 py-2 text-sm text-gray-600">
+                  Welcome, {user?.name || 'User'}
+                </div>
+                <button
+                  onClick={() => {
+                    handleLogout();
+                    closeMobileMenu();
+                  }}
+                  className="block w-full text-left px-3 py-2 text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded"
+                >
+                  Logout
+                </button>
+              </>
+            ) : (
+              <>
+                <Link
+                  href="/auth/login"
+                  className="block px-3 py-2 text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded"
+                  onClick={closeMobileMenu}
+                >
+                  Login
+                </Link>
+                <Link
+                  href="/auth/signup"
+                  className="block px-3 py-2 text-base font-medium bg-blue-600 text-white hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded mx-3 mt-2 text-center"
+                  onClick={closeMobileMenu}
+                >
+                  Sign Up
+                </Link>
+              </>
+            )}
+          </div>
         </div>
       </div>
     </nav>

@@ -208,11 +208,13 @@ export class AuthAPI {
 
 // Utility functions
 export function isAuthenticated(): boolean {
-  // With httpOnly cookies, we can't directly check auth status from client
-  // This would typically require a call to the /api/auth/me endpoint
-  // or implementing a session check endpoint that returns only boolean
-  // For now, return false as we can't access httpOnly cookies from JS
-  return false;
+  // For development purposes, we'll simulate authentication
+  // In production, this would check for a valid session cookie or token
+  if (typeof window === 'undefined') return false; // Server-side
+  
+  // Check for any auth indicators in localStorage for development
+  const devAuth = localStorage.getItem('dev-auth');
+  return devAuth === 'true';
 }
 
 export function getAuthToken(): string | null {
