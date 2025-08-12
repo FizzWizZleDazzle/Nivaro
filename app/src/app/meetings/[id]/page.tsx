@@ -1,14 +1,10 @@
+'use client';
+
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Meeting, RSVP } from '@/types/meetings';
 import { getMeeting, getRSVPs, createRSVP } from '@/lib/meetings';
-
-export async function generateStaticParams() {
-  return [];
-}
-
-'use client';
 
 export default function MeetingDetailPage() {
   const params = useParams();
