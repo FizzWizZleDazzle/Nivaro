@@ -40,7 +40,7 @@ jobs:
       with:
         apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-        command: pages deploy app/.next --project-name=nivaro-staging --compatibility-date=2025-01-01
+        command: pages deploy app/.next --project-name=nivaro-staging
 
   deploy-backend-staging:
     name: Deploy Backend to Staging

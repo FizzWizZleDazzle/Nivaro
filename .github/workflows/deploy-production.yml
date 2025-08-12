@@ -44,7 +44,7 @@ jobs:
       with:
         apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-        command: pages deploy app/out --project-name=nivaro-frontend --compatibility-date=2025-01-01
+        command: pages deploy app/.next --project-name=nivaro
         
     - name: Create GitHub Release
       uses: actions/create-release@v1
