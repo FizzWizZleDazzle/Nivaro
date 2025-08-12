@@ -173,7 +173,7 @@ async fn login(mut req: Request, ctx: RouteContext<()>) -> Result<Response> {
 
     let secret = match get_jwt_secret(&ctx) {
         Ok(secret) => secret,
-        Err(err) => return Response::error(&format!("JWT configuration error: {}", err), 500),
+        Err(_) => return Response::error("Authentication configuration error", 500),
     };
     let token = match encode(&Header::default(), &claims, &EncodingKey::from_secret(secret.as_ref())) {
         Ok(token) => token,
