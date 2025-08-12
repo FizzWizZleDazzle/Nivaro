@@ -283,7 +283,12 @@ async fn reset_password(_req: Request, _ctx: RouteContext<()>) -> Result<Respons
     Response::from_json(&response)
 }
 
-async fn change_password(_req: Request, _ctx: RouteContext<()>) -> Result<Response> {
+async fn change_password(req: Request, ctx: RouteContext<()>) -> Result<Response> {
+    // Verify CSRF token for this state-changing operation
+    if !verify_csrf_token(&req, &ctx).await.unwrap_or(false) {
+        return Response::error("CSRF token validation failed", 403);
+    }
+
     let response = ApiResponse::success("Password changed successfully");
     Response::from_json(&response)
 }
@@ -293,12 +298,22 @@ async fn verify_email(_req: Request, _ctx: RouteContext<()>) -> Result<Response>
     Response::from_json(&response)
 }
 
-async fn update_profile(_req: Request, _ctx: RouteContext<()>) -> Result<Response> {
+async fn update_profile(req: Request, ctx: RouteContext<()>) -> Result<Response> {
+    // Verify CSRF token for this state-changing operation
+    if !verify_csrf_token(&req, &ctx).await.unwrap_or(false) {
+        return Response::error("CSRF token validation failed", 403);
+    }
+
     let response = ApiResponse::success("Profile updated successfully");
     Response::from_json(&response)
 }
 
-async fn delete_account(_req: Request, _ctx: RouteContext<()>) -> Result<Response> {
+async fn delete_account(req: Request, ctx: RouteContext<()>) -> Result<Response> {
+    // Verify CSRF token for this state-changing operation
+    if !verify_csrf_token(&req, &ctx).await.unwrap_or(false) {
+        return Response::error("CSRF token validation failed", 403);
+    }
+
     let response = ApiResponse::success("Account deleted successfully");
     Response::from_json(&response)
 }
@@ -314,7 +329,12 @@ async fn get_user_sessions(_req: Request, _ctx: RouteContext<()>) -> Result<Resp
     Response::from_json(&response)
 }
 
-async fn revoke_all_sessions(_req: Request, _ctx: RouteContext<()>) -> Result<Response> {
+async fn revoke_all_sessions(req: Request, ctx: RouteContext<()>) -> Result<Response> {
+    // Verify CSRF token for this state-changing operation
+    if !verify_csrf_token(&req, &ctx).await.unwrap_or(false) {
+        return Response::error("CSRF token validation failed", 403);
+    }
+
     let response = ApiResponse::success("All sessions revoked successfully");
     Response::from_json(&response)
 }
@@ -521,4 +541,127 @@ fn get_user_id_from_token(req: &Request, ctx: &RouteContext<()>) -> Option<Strin
         Ok(token_data) => Some(token_data.claims.sub),
         Err(_) => None, // Invalid or expired token
     }
+}
+
+// CSRF Protection Functions
+
+pub async fn get_csrf_token(req: Request, ctx: RouteContext<()>) -> Result<Response> {
+    // For CSRF tokens, we need a user to be authenticated
+    let user_id = match get_user_id_from_token(&req, &ctx) {
+        Some(id) => id,
+        None => return Response::error("Unauthorized", 401),
+    };
+
+    let db = ctx.env.d1("DB")?;
+
+    // Try to get existing valid CSRF token
+    if let Some(existing_token) = get_valid_csrf_token(&db, &user_id).await {
+        let response = serde_json::json!({
+            "token": existing_token,
+            "expires_at": chrono::Utc::now().checked_add_signed(chrono::Duration::hours(1))
+                .unwrap_or(chrono::Utc::now()).to_rfc3339()
+        });
+        return Response::from_json(&response);
+    }
+
+    // Generate new CSRF token
+    let csrf_token = generate_csrf_token();
+    let token_id = Uuid::new_v4().to_string();
+    let now = Utc::now().to_rfc3339();
+    let expires_at = (Utc::now() + chrono::Duration::hours(1)).to_rfc3339();
+
+    // Store token in database
+    let result = store_csrf_token(&db, &token_id, &user_id, &csrf_token, &expires_at, &now).await;
+    
+    if !result {
+        return Response::error("Failed to generate CSRF token", 500);
+    }
+
+    let response = serde_json::json!({
+        "token": csrf_token,
+        "expires_at": expires_at
+    });
+
+    Response::from_json(&response)
+}
+
+async fn get_valid_csrf_token(db: &D1Database, user_id: &str) -> Option<String> {
+    let now = Utc::now().to_rfc3339();
+    let stmt = db.prepare("SELECT token FROM csrf_tokens WHERE user_id = ?1 AND expires_at > ?2 ORDER BY created_at DESC LIMIT 1");
+    
+    if let Ok(stmt) = stmt.bind(&vec![user_id.into(), now.into()]) {
+        if let Ok(Some(result)) = stmt.first::<serde_json::Value>(None).await {
+            if let Some(token) = result["token"].as_str() {
+                return Some(token.to_string());
+            }
+        }
+    }
+    None
+}
+
+fn generate_csrf_token() -> String {
+    Uuid::new_v4().to_string()
+}
+
+async fn store_csrf_token(db: &D1Database, token_id: &str, user_id: &str, token: &str, expires_at: &str, created_at: &str) -> bool {
+    // Clean up expired tokens first
+    cleanup_expired_csrf_tokens(db, user_id).await;
+    
+    let stmt = db.prepare("
+        INSERT INTO csrf_tokens (id, user_id, token, expires_at, created_at)
+        VALUES (?1, ?2, ?3, ?4, ?5)
+    ");
+    
+    if let Ok(stmt) = stmt.bind(&vec![
+        token_id.into(),
+        user_id.into(),
+        token.into(),
+        expires_at.into(),
+        created_at.into(),
+    ]) {
+        stmt.run().await.is_ok()
+    } else {
+        false
+    }
+}
+
+async fn cleanup_expired_csrf_tokens(db: &D1Database, user_id: &str) {
+    let now = Utc::now().to_rfc3339();
+    let stmt = db.prepare("DELETE FROM csrf_tokens WHERE user_id = ?1 AND expires_at <= ?2");
+    if let Ok(stmt) = stmt.bind(&vec![user_id.into(), now.into()]) {
+        let _ = stmt.run().await;
+    }
+}
+
+pub async fn verify_csrf_token(req: &Request, ctx: &RouteContext<()>) -> Result<bool> {
+    // Get user ID from the request
+    let user_id = match get_user_id_from_token(req, ctx) {
+        Some(id) => id,
+        None => return Ok(false), // Not authenticated
+    };
+
+    // Get CSRF token from header
+    let csrf_token = match req.headers().get("X-CSRF-Token") {
+        Ok(Some(token)) => token,
+        _ => return Ok(false), // No CSRF token provided
+    };
+
+    let db = ctx.env.d1("DB")?;
+    
+    // Verify token exists and is valid
+    let now = Utc::now().to_rfc3339();
+    let stmt = db.prepare("SELECT COUNT(*) as count FROM csrf_tokens WHERE user_id = ?1 AND token = ?2 AND expires_at > ?3");
+    
+    if let Ok(stmt) = stmt.bind(&vec![
+        user_id.into(),
+        csrf_token.into(),
+        now.into(),
+    ]) {
+        if let Ok(Some(result)) = stmt.first::<serde_json::Value>(None).await {
+            let count = result["count"].as_u64().unwrap_or(0);
+            return Ok(count > 0);
+        }
+    }
+    
+    Ok(false)
 }

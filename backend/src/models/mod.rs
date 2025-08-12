@@ -62,6 +62,15 @@ pub struct PasswordReset {
     pub used_at: Option<String>,
 }
 
+#[derive(Serialize, Deserialize, Clone)]
+pub struct CsrfToken {
+    pub id: String,
+    pub user_id: String,
+    pub token: String,
+    pub expires_at: String,
+    pub created_at: String,
+}
+
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct SocialAccount {
     pub id: String,
