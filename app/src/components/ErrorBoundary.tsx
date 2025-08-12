@@ -30,7 +30,7 @@ const DefaultErrorFallback: React.FC<ErrorFallbackProps> = ({ error, resetError 
           Something went wrong
         </h2>
         <p className="text-gray-600 text-center mb-4">
-          We're sorry, but something unexpected happened. Please try again.
+          We&apos;re sorry, but something unexpected happened. Please try again.
         </p>
         {process.env.NODE_ENV === 'development' && (
           <details className="mb-4 p-3 bg-gray-100 rounded text-sm">
@@ -77,8 +77,8 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
     console.error('Error info:', errorInfo);
     
     // You can also log to external services like Sentry here
-    if (typeof window !== 'undefined' && (window as any).gtag) {
-      (window as any).gtag('event', 'exception', {
+    if (typeof window !== 'undefined' && (window as Window & { gtag?: (...args: unknown[]) => void }).gtag) {
+      (window as Window & { gtag: (...args: unknown[]) => void }).gtag('event', 'exception', {
         description: error.toString(),
         fatal: false,
       });

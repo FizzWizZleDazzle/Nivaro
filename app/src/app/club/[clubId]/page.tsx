@@ -3,15 +3,17 @@
 import { useParams } from 'next/navigation';
 import { mockClubs, mockEvents, mockAnnouncements, mockProjects, mockMembers } from '../../../lib/mockData';
 import { MemberRole } from '../../../lib/types';
-import { mockAuth, isAdmin } from '../../../lib/auth';
+import { isAdmin } from '../../../lib/auth';
+import { useAuth } from '../../../contexts/AuthContext';
 
 export default function ClubDashboard() {
   const params = useParams();
   const clubId = params.clubId as string;
+  const { user } = useAuth();
   
   // Find the club and user's membership
   const club = mockClubs.find(c => c.id === clubId);
-  const membership = mockMembers.find(m => m.clubId === clubId && m.userId === mockAuth.userId);
+  const membership = mockMembers.find(m => m.clubId === clubId && m.userId === user?.id);
   const userRole = membership?.role || MemberRole.MEMBER;
   
   // Filter data for this club

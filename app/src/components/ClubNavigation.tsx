@@ -4,7 +4,8 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { mockClubs, mockMembers } from '../lib/mockData';
 import { MemberRole } from '../lib/types';
-import { mockAuth, isAdmin } from '../lib/auth';
+import { isAdmin } from '../lib/auth';
+import { useAuth } from '../contexts/AuthContext';
 
 interface ClubNavigationProps {
   clubId: string;
@@ -12,10 +13,11 @@ interface ClubNavigationProps {
 
 export default function ClubNavigation({ clubId }: ClubNavigationProps) {
   const pathname = usePathname();
+  const { user } = useAuth();
   
   // Find the club and current user's membership
   const club = mockClubs.find(c => c.id === clubId);
-  const membership = mockMembers.find(m => m.clubId === clubId && m.userId === mockAuth.userId);
+  const membership = mockMembers.find(m => m.clubId === clubId && m.userId === user?.id);
   const userRole = membership?.role || MemberRole.MEMBER;
 
   if (!club) {
@@ -67,7 +69,7 @@ export default function ClubNavigation({ clubId }: ClubNavigationProps) {
               </span>
             )}
             <div className="text-sm text-gray-600">
-              Welcome, {mockAuth.name}
+              Welcome, {user?.name || 'Guest'}
             </div>
           </div>
         </div>
