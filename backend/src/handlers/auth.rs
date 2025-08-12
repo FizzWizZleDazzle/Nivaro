@@ -171,7 +171,10 @@ async fn login(mut req: Request, ctx: RouteContext<()>) -> Result<Response> {
         iat: Utc::now().timestamp() as usize,
     };
 
-    let secret = get_jwt_secret();
+    let secret = match get_jwt_secret(&ctx) {
+        Ok(secret) => secret,
+        Err(err) => return Response::error(&format!("JWT configuration error: {}", err), 500),
+    };
     let token = match encode(&Header::default(), &claims, &EncodingKey::from_secret(secret.as_ref())) {
         Ok(token) => token,
         Err(_) => return Response::error("Failed to generate token", 500),
@@ -236,7 +239,7 @@ async fn logout(req: Request, ctx: RouteContext<()>) -> Result<Response> {
 }
 
 async fn get_current_user(req: Request, ctx: RouteContext<()>) -> Result<Response> {
-    let user_id = match get_user_id_from_token(&req) {
+    let user_id = match get_user_id_from_token(&req, &ctx) {
         Some(id) => id,
         None => return Response::error("Unauthorized", 401),
     };
@@ -474,9 +477,10 @@ async fn send_verification_email(_email: &str, _token: &str) {
     // Mock email sending - in production, use an email service
 }
 
-fn get_jwt_secret() -> String {
-    // TODO: Use environment variable for JWT secret in production
-    "your-256-bit-secret-key-change-this-in-production".to_string()
+fn get_jwt_secret(ctx: &RouteContext<()>) -> Result<String> {
+    ctx.env.var("JWT_SECRET")
+        .map_err(|_| "JWT_SECRET environment variable not set".into())
+        .map(|secret| secret.to_string())
 }
 
 fn extract_token(req: &Request) -> Option<String> {
@@ -500,10 +504,10 @@ fn extract_token(req: &Request) -> Option<String> {
     None
 }
 
-fn get_user_id_from_token(req: &Request) -> Option<String> {
+fn get_user_id_from_token(req: &Request, ctx: &RouteContext<()>) -> Option<String> {
     let token = extract_token(req)?;
     
-    let secret = get_jwt_secret();
+    let secret = get_jwt_secret(ctx).ok()?;
     let decoding_key = DecodingKey::from_secret(secret.as_ref());
     let validation = Validation::default();
     
