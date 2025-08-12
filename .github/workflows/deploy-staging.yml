@@ -35,12 +35,19 @@ jobs:
         NEXT_PUBLIC_API_URL: https://nivaroapi.fizzwizzledazzle.dev
         NEXT_PUBLIC_ENVIRONMENT: staging
         
-    - name: Deploy to Cloudflare Pages (Staging)
-      uses: cloudflare/wrangler-action@v3
+    - name: Prepare static files
+      run: |
+        cd app
+        mkdir -p deploy
+        cp -r .next/static deploy/
+        cp -r public/* deploy/ 2>/dev/null || true
+        
+    - name: Deploy to GitHub Pages (Staging)
+      uses: peaceiris/actions-gh-pages@v3
       with:
-        apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-        accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-        command: pages deploy app/.next --project-name=nivaro-staging
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./app/deploy
+        destination_dir: staging
 
   deploy-backend-staging:
     name: Deploy Backend to Staging
