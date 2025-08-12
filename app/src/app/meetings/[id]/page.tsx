@@ -6,6 +6,12 @@ import Link from 'next/link';
 import { Meeting, RSVP } from '@/types/meetings';
 import { getMeeting, getRSVPs, createRSVP } from '@/lib/meetings';
 
+export async function generateStaticParams() {
+  // For static export, we need to provide the dynamic routes
+  // Since this is a dynamic app, we'll return empty array and handle client-side routing
+  return [];
+}
+
 export default function MeetingDetailPage() {
   const params = useParams();
   const router = useRouter();
