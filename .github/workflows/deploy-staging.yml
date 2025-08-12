@@ -25,7 +25,7 @@ jobs:
     - name: Install dependencies
       run: |
         cd app
-        npm ci --legacy-peer-deps
+        npm install --legacy-peer-deps
         
     - name: Build frontend
       run: |
@@ -68,7 +68,7 @@ jobs:
         key: ${{ runner.os }}-cargo-${{ hashFiles('backend/Cargo.lock') }}
         
     - name: Install worker-build
-      run: cargo install worker-build --locked
+      run: cargo install worker-build --locked --force
       
     - name: Build backend
       run: |
