@@ -3,15 +3,17 @@
 import { useParams } from 'next/navigation';
 import { mockClubs, mockMembers } from '../../../../lib/mockData';
 import { MemberRole } from '../../../../lib/types';
-import { mockAuth, isAdmin } from '../../../../lib/auth';
+import { isAdmin } from '../../../../lib/auth';
+import { useAuth } from '../../../../contexts/AuthContext';
 
 export default function MembersPage() {
   const params = useParams();
   const clubId = params.clubId as string;
+  const { user } = useAuth();
   
   // Find the club and user's membership
   const club = mockClubs.find(c => c.id === clubId);
-  const membership = mockMembers.find(m => m.clubId === clubId && m.userId === mockAuth.userId);
+  const membership = mockMembers.find(m => m.clubId === clubId && m.userId === user?.id);
   const userRole = membership?.role || MemberRole.MEMBER;
   
   // Filter members for this club
@@ -72,7 +74,7 @@ export default function MembersPage() {
                   <span className="text-sm text-gray-500">
                     Joined {member.joinedAt.toLocaleDateString()}
                   </span>
-                  {isAdmin(userRole) && member.userId !== mockAuth.userId && (
+                  {isAdmin(userRole) && member.userId !== user?.id && (
                     <button className="text-gray-400 hover:text-gray-600">
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />

@@ -239,12 +239,7 @@ export function isValidEmail(email: string): boolean {
   return emailRegex.test(email);
 }
 
-// Mock authentication functions for development compatibility
-export const mockAuth: AuthSession = {
-  userId: 'user-1',
-  email: 'demo@nivaro.com',
-  name: 'Demo User'
-};
+// Role-based access control functions
 
 export function isAdmin(role: MemberRole): boolean {
   return role === MemberRole.ADMIN;
