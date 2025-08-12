@@ -4,6 +4,11 @@ on:
   push:
     branches: [ main ]
 
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
 env:
   NODE_VERSION: '20'
   
@@ -43,11 +48,12 @@ jobs:
         cp -r public/* deploy/ 2>/dev/null || true
         
     - name: Deploy to GitHub Pages (Staging)
-      uses: peaceiris/actions-gh-pages@v3
+      uses: peaceiris/actions-gh-pages@v4
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         publish_dir: ./app/deploy
         destination_dir: staging
+        force_orphan: true
 
   deploy-backend-staging:
     name: Deploy Backend to Staging
