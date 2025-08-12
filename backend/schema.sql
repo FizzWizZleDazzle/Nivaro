@@ -70,6 +70,16 @@ CREATE TABLE IF NOT EXISTS social_accounts (
     UNIQUE(provider, provider_id)
 );
 
+-- CSRF tokens for protecting against Cross-Site Request Forgery
+CREATE TABLE IF NOT EXISTS csrf_tokens (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    token TEXT UNIQUE NOT NULL,
+    expires_at TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
 -- Indexes for better performance
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 CREATE INDEX IF NOT EXISTS idx_users_email_verified ON users(email_verified);
@@ -83,3 +93,6 @@ CREATE INDEX IF NOT EXISTS idx_password_resets_token ON password_resets(token);
 CREATE INDEX IF NOT EXISTS idx_password_resets_user_id ON password_resets(user_id);
 CREATE INDEX IF NOT EXISTS idx_social_accounts_user_id ON social_accounts(user_id);
 CREATE INDEX IF NOT EXISTS idx_social_accounts_provider ON social_accounts(provider, provider_id);
+CREATE INDEX IF NOT EXISTS idx_csrf_tokens_user_id ON csrf_tokens(user_id);
+CREATE INDEX IF NOT EXISTS idx_csrf_tokens_token ON csrf_tokens(token);
+CREATE INDEX IF NOT EXISTS idx_csrf_tokens_expires_at ON csrf_tokens(expires_at);

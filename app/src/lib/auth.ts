@@ -81,8 +81,49 @@ const API_BASE = process.env.NODE_ENV === 'production'
   ? 'https://your-backend-domain.com'
   : 'http://localhost:8787';
 
+// CSRF Token Management
+let csrfToken: string | null = null;
+let csrfTokenExpiry: Date | null = null;
+
+async function getCsrfToken(): Promise<string> {
+  // Check if we have a valid token
+  if (csrfToken && csrfTokenExpiry && csrfTokenExpiry > new Date()) {
+    return csrfToken;
+  }
+
+  try {
+    const response = await fetch(`${API_BASE}/api/csrf-token`, {
+      method: 'GET',
+      credentials: 'include', // Include httpOnly auth cookies
+    });
+
+    if (!response.ok) {
+      throw new Error(`CSRF token request failed: ${response.status}`);
+    }
+
+    const data = await response.json();
+    if (!data.token) {
+      throw new Error('No CSRF token received from server');
+    }
+    
+    const token = data.token as string;
+    csrfToken = token;
+    csrfTokenExpiry = new Date(data.expires_at);
+    
+    return token;
+  } catch (error) {
+    console.error('Failed to get CSRF token:', error);
+    throw error;
+  }
+}
+
+function clearCsrfToken(): void {
+  csrfToken = null;
+  csrfTokenExpiry = null;
+}
+
 export class AuthAPI {
-  private static async request(endpoint: string, options?: RequestInit): Promise<unknown> {
+  private static async request(endpoint: string, options?: RequestInit, requiresCsrf: boolean = false): Promise<unknown> {
     const url = `${API_BASE}${endpoint}`;
     
     const defaultOptions: RequestInit = {
@@ -94,11 +135,29 @@ export class AuthAPI {
 
     const mergedOptions = { ...defaultOptions, ...options };
 
+    // Add CSRF token for state-changing operations
+    if (requiresCsrf && options?.method && ['POST', 'PUT', 'DELETE'].includes(options.method)) {
+      try {
+        const token = await getCsrfToken();
+        mergedOptions.headers = {
+          ...mergedOptions.headers,
+          'X-CSRF-Token': token,
+        };
+      } catch (error) {
+        console.error('Failed to get CSRF token for request:', error);
+        throw new Error('CSRF token required but unavailable');
+      }
+    }
+
     try {
       const response = await fetch(url, mergedOptions);
       const data = await response.json();
       
       if (!response.ok) {
+        // Clear CSRF token if we get a 403 (might be expired)
+        if (response.status === 403 && requiresCsrf) {
+          clearCsrfToken();
+        }
         throw new Error(data.error || `HTTP error! status: ${response.status}`);
       }
       
@@ -128,7 +187,8 @@ export class AuthAPI {
 
   static async logout(): Promise<void> {
     await this.request('/api/auth/logout', { method: 'POST' });
-    // httpOnly cookies are cleared by the server
+    // Clear CSRF token after logout
+    clearCsrfToken();
   }
 
   static async forgotPassword(request: ForgotPasswordRequest): Promise<{ message: string }> {
@@ -149,7 +209,7 @@ export class AuthAPI {
     return this.request('/api/auth/change-password', {
       method: 'POST',
       body: JSON.stringify(request),
-    }) as Promise<{ message: string }>;
+    }, true) as Promise<{ message: string }>;
   }
 
   static async verifyEmail(token: string): Promise<{ message: string }> {
@@ -168,16 +228,17 @@ export class AuthAPI {
     const response = await this.request('/api/auth/profile', {
       method: 'PUT',
       body: JSON.stringify(request),
-    }) as { data: User };
+    }, true) as { data: User };
     return response.data;
   }
 
   static async deleteAccount(): Promise<{ message: string }> {
     const response = await this.request('/api/auth/account', {
       method: 'DELETE',
-    }) as { message: string };
+    }, true) as { message: string };
     
-    // httpOnly cookies are cleared by the server
+    // Clear CSRF token after account deletion
+    clearCsrfToken();
     return response;
   }
 
@@ -199,9 +260,10 @@ export class AuthAPI {
   static async revokeAllSessions(): Promise<{ message: string }> {
     const response = await this.request('/api/auth/sessions', {
       method: 'DELETE',
-    }) as { message: string };
+    }, true) as { message: string };
     
-    // httpOnly cookies are cleared by the server
+    // Clear CSRF token after session revocation
+    clearCsrfToken();
     return response;
   }
 }
@@ -256,3 +318,52 @@ export function canInviteMembers(role: MemberRole): boolean {
 export function canManageContent(role: MemberRole): boolean {
   return isAdmin(role);
 }
+
+// CSRF-protected API utility for other modules
+export async function apiRequestWithCsrf(endpoint: string, options?: RequestInit): Promise<unknown> {
+  const url = `${API_BASE}${endpoint}`;
+  
+  const defaultOptions: RequestInit = {
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    credentials: 'include',
+  };
+
+  const mergedOptions = { ...defaultOptions, ...options };
+
+  // Add CSRF token for state-changing operations
+  if (options?.method && ['POST', 'PUT', 'DELETE'].includes(options.method)) {
+    try {
+      const token = await getCsrfToken();
+      mergedOptions.headers = {
+        ...mergedOptions.headers,
+        'X-CSRF-Token': token,
+      };
+    } catch (error) {
+      console.error('Failed to get CSRF token for request:', error);
+      throw new Error('CSRF token required but unavailable');
+    }
+  }
+
+  try {
+    const response = await fetch(url, mergedOptions);
+    const data = await response.json();
+    
+    if (!response.ok) {
+      // Clear CSRF token if we get a 403 (might be expired)
+      if (response.status === 403 && options?.method && ['POST', 'PUT', 'DELETE'].includes(options.method)) {
+        clearCsrfToken();
+      }
+      throw new Error(data.error || `HTTP error! status: ${response.status}`);
+    }
+    
+    return data;
+  } catch (error) {
+    console.error('API request failed:', error);
+    throw error;
+  }
+}
+
+// Export CSRF token utilities for manual use if needed
+export { getCsrfToken, clearCsrfToken };

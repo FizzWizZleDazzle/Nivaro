@@ -1,4 +1,5 @@
 use crate::models::*;
+use crate::handlers::auth::verify_csrf_token;
 use chrono::Utc;
 use uuid::Uuid;
 use worker::*;
@@ -16,8 +17,8 @@ pub async fn handle_clubs(req: Request, ctx: RouteContext<()>) -> Result<Respons
             }
         }
         Method::Post => {
-            // Create new club
-            create_club(req).await
+            // Create new club - requires CSRF protection
+            create_club(req, ctx).await
         }
         _ => Response::error("Method not allowed", 405),
     }
@@ -74,7 +75,12 @@ async fn get_club(club_id: &str) -> Result<Response> {
     }
 }
 
-async fn create_club(mut req: Request) -> Result<Response> {
+async fn create_club(mut req: Request, ctx: RouteContext<()>) -> Result<Response> {
+    // Verify CSRF token for this state-changing operation
+    if !verify_csrf_token(&req, &ctx).await.unwrap_or(false) {
+        return Response::error("CSRF token validation failed", 403);
+    }
+
     let create_request: CreateClubRequest = req.json().await?;
 
     // Mock club creation - in real app this would save to database

@@ -18,6 +18,10 @@ async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
         .get("/", |_, _| {
             Response::ok("Nivaro API - Club Management Platform")
         })
+        // CSRF token endpoint
+        .get_async("/api/csrf-token", |req, ctx| async move {
+            get_csrf_token(req, ctx).await
+        })
         // Auth endpoints
         .post_async("/api/auth/signup", |req, ctx| async move {
             handle_auth(req, ctx).await
@@ -87,7 +91,12 @@ async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
             }
             Response::error("Meeting not found", 404)
         })
-        .post_async("/api/meetings", |mut req, _| async move {
+        .post_async("/api/meetings", |mut req, ctx| async move {
+            // CSRF protection for meeting creation
+            if !crate::handlers::auth::verify_csrf_token(&req, &ctx).await.unwrap_or(false) {
+                return Response::error("CSRF token validation failed", 403);
+            }
+            
             match req.json::<CreateMeetingRequest>().await {
                 Ok(meeting_data) => {
                     let meeting = create_meeting(meeting_data).await;
@@ -97,6 +106,11 @@ async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
             }
         })
         .put_async("/api/meetings/:id", |mut req, ctx| async move {
+            // CSRF protection for meeting updates
+            if !crate::handlers::auth::verify_csrf_token(&req, &ctx).await.unwrap_or(false) {
+                return Response::error("CSRF token validation failed", 403);
+            }
+            
             if let Some(id) = ctx.param("id") {
                 match req.json::<UpdateMeetingRequest>().await {
                     Ok(updates) => {
@@ -109,7 +123,12 @@ async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
             }
             Response::error("Meeting not found", 404)
         })
-        .delete_async("/api/meetings/:id", |_, ctx| async move {
+        .delete_async("/api/meetings/:id", |req, ctx| async move {
+            // CSRF protection for meeting deletion
+            if !crate::handlers::auth::verify_csrf_token(&req, &ctx).await.unwrap_or(false) {
+                return Response::error("CSRF token validation failed", 403);
+            }
+            
             if let Some(id) = ctx.param("id") {
                 if delete_meeting(id).await {
                     return Response::ok("Meeting deleted");
@@ -126,6 +145,11 @@ async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
             Response::error("Meeting not found", 404)
         })
         .post_async("/api/meetings/:id/rsvps", |mut req, ctx| async move {
+            // CSRF protection for RSVP creation
+            if !crate::handlers::auth::verify_csrf_token(&req, &ctx).await.unwrap_or(false) {
+                return Response::error("CSRF token validation failed", 403);
+            }
+            
             if let Some(id) = ctx.param("id") {
                 match req.json::<CreateRSVPRequest>().await {
                     Ok(rsvp_data) => {
@@ -141,17 +165,32 @@ async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
         .get_async("/api/forum/questions", |_, _| async move {
             forum::get_questions().await
         })
-        .post_async("/api/forum/questions", |req, _| async move {
+        .post_async("/api/forum/questions", |req, ctx| async move {
+            // CSRF protection for question creation
+            if !crate::handlers::auth::verify_csrf_token(&req, &ctx).await.unwrap_or(false) {
+                return Response::error("CSRF token validation failed", 403);
+            }
+            
             forum::create_question(req).await
         })
         .put_async("/api/forum/questions/:id/claim", |req, ctx| async move {
+            // CSRF protection for question claiming
+            if !crate::handlers::auth::verify_csrf_token(&req, &ctx).await.unwrap_or(false) {
+                return Response::error("CSRF token validation failed", 403);
+            }
+            
             if let Some(id) = ctx.param("id") {
                 forum::claim_question(id, req).await
             } else {
                 Response::error("Invalid question ID", 400)
             }
         })
-        .put_async("/api/forum/questions/:id/resolve", |_, ctx| async move {
+        .put_async("/api/forum/questions/:id/resolve", |req, ctx| async move {
+            // CSRF protection for question resolution
+            if !crate::handlers::auth::verify_csrf_token(&req, &ctx).await.unwrap_or(false) {
+                return Response::error("CSRF token validation failed", 403);
+            }
+            
             if let Some(id) = ctx.param("id") {
                 forum::resolve_question(id).await
             } else {

@@ -1,4 +1,5 @@
 use crate::models::*;
+use crate::handlers::auth::verify_csrf_token;
 use chrono::Utc;
 use uuid::Uuid;
 use worker::*;
@@ -16,8 +17,8 @@ pub async fn handle_members(req: Request, ctx: RouteContext<()>) -> Result<Respo
             }
         }
         Method::Post => {
-            // Join club with invite code
-            join_club(req).await
+            // Join club with invite code - requires CSRF protection
+            join_club(req, ctx).await
         }
         _ => Response::error("Method not allowed", 405),
     }
@@ -80,7 +81,12 @@ async fn get_club_members(club_id: &str) -> Result<Response> {
     }
 }
 
-async fn join_club(mut req: Request) -> Result<Response> {
+async fn join_club(mut req: Request, ctx: RouteContext<()>) -> Result<Response> {
+    // Verify CSRF token for this state-changing operation
+    if !verify_csrf_token(&req, &ctx).await.unwrap_or(false) {
+        return Response::error("CSRF token validation failed", 403);
+    }
+
     let join_request: JoinClubRequest = req.json().await?;
 
     // Mock invite code validation
