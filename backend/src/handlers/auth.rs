@@ -507,7 +507,13 @@ fn extract_token(req: &Request) -> Option<String> {
 fn get_user_id_from_token(req: &Request, ctx: &RouteContext<()>) -> Option<String> {
     let token = extract_token(req)?;
     
-    let secret = get_jwt_secret(ctx).ok()?;
+    let secret = match get_jwt_secret(ctx) {
+        Ok(secret) => secret,
+        Err(e) => {
+            console_log!("Error getting JWT secret: {}", e);
+            return None;
+        }
+    };
     let decoding_key = DecodingKey::from_secret(secret.as_ref());
     let validation = Validation::default();
     
