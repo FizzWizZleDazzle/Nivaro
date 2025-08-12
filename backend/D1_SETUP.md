@@ -98,10 +98,10 @@ wrangler d1 execute nivaro-auth --command="SELECT COUNT(*) FROM users;"
 
 2. Update code to use environment variable:
    ```rust
-   fn get_jwt_secret() -> String {
-       // Get from environment in production
-       std::env::var("JWT_SECRET")
-           .unwrap_or_else(|_| "your-fallback-secret-change-this".to_string())
+   fn get_jwt_secret(ctx: &RouteContext<()>) -> Result<String> {
+       ctx.env.var("JWT_SECRET")
+           .map_err(|_| "JWT_SECRET environment variable not set".into())
+           .map(|secret| secret.to_string())
    }
    ```
 
