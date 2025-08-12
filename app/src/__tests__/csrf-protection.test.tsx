@@ -1,4 +1,3 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { getCsrfToken, clearCsrfToken, apiRequestWithCsrf } from '../lib/auth';
 
