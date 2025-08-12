@@ -1,13 +1,13 @@
-use worker::*;
 use crate::models::*;
 use chrono::Utc;
 use uuid::Uuid;
+use worker::*;
 
 pub async fn handle_auth(req: Request, _ctx: RouteContext<()>) -> Result<Response> {
     let method = req.method();
     let url = req.url()?;
     let path = url.path();
-    
+
     match (method, path) {
         (Method::Post, "/api/auth/signup") => signup(req).await,
         (Method::Post, "/api/auth/login") => login(req).await,
@@ -22,7 +22,7 @@ pub async fn handle_auth(req: Request, _ctx: RouteContext<()>) -> Result<Respons
         (Method::Post, "/api/auth/social") => social_login(req).await,
         (Method::Get, "/api/auth/sessions") => get_user_sessions(req).await,
         (Method::Delete, "/api/auth/sessions") => revoke_all_sessions(req).await,
-        _ => Response::error("Not found", 404)
+        _ => Response::error("Not found", 404),
     }
 }
 
@@ -33,7 +33,10 @@ async fn signup(mut req: Request) -> Result<Response> {
     };
 
     // Basic validation
-    if signup_request.email.is_empty() || signup_request.password.is_empty() || signup_request.name.is_empty() {
+    if signup_request.email.is_empty()
+        || signup_request.password.is_empty()
+        || signup_request.name.is_empty()
+    {
         return Response::error("Email, password, and name are required", 400);
     }
 
@@ -53,7 +56,7 @@ async fn signup(mut req: Request) -> Result<Response> {
     // Create user (mock creation)
     let user_id = Uuid::new_v4().to_string();
     let now = Utc::now().to_rfc3339();
-    
+
     let user = User {
         id: user_id.clone(),
         email: signup_request.email.clone(),
@@ -125,10 +128,14 @@ async fn login(mut req: Request) -> Result<Response> {
             error: None,
         };
 
-        return Ok(Response::from_json(&response)?
-            .with_headers(worker::Headers::from_iter(vec![
-                ("Set-Cookie".to_string(), format!("auth_token={}; HttpOnly; Secure; SameSite=Strict; Max-Age=86400", token))
-            ])));
+        return Ok(
+            Response::from_json(&response)?.with_headers(worker::Headers::from_iter(vec![(
+                "Set-Cookie".to_string(),
+                format!(
+                    "auth_token={token}; HttpOnly; Secure; SameSite=Strict; Max-Age=86400"
+                ),
+            )])),
+        );
     }
 
     Response::error("Invalid credentials", 401)
@@ -140,10 +147,12 @@ async fn logout(req: Request) -> Result<Response> {
     }
 
     let response = ApiResponse::success("Logged out successfully");
-    Ok(Response::from_json(&response)?
-        .with_headers(worker::Headers::from_iter(vec![
-            ("Set-Cookie".to_string(), "auth_token=; HttpOnly; Secure; SameSite=Strict; Max-Age=0".to_string())
-        ])))
+    Ok(
+        Response::from_json(&response)?.with_headers(worker::Headers::from_iter(vec![(
+            "Set-Cookie".to_string(),
+            "auth_token=; HttpOnly; Secure; SameSite=Strict; Max-Age=0".to_string(),
+        )])),
+    )
 }
 
 async fn forgot_password(mut req: Request) -> Result<Response> {
@@ -154,11 +163,16 @@ async fn forgot_password(mut req: Request) -> Result<Response> {
 
     // Rate limiting
     if is_rate_limited(&req, "forgot_password").await {
-        return Response::error("Too many password reset requests. Please try again later", 429);
+        return Response::error(
+            "Too many password reset requests. Please try again later",
+            429,
+        );
     }
 
     // Always return success to prevent email enumeration
-    let response = ApiResponse::success("If an account with that email exists, a password reset link has been sent");
+    let response = ApiResponse::success(
+        "If an account with that email exists, a password reset link has been sent",
+    );
     Response::from_json(&response)
 }
 
@@ -245,7 +259,9 @@ async fn update_profile(mut req: Request) -> Result<Response> {
     let now = Utc::now().to_rfc3339();
     let updated_user = User {
         id: "user-1".to_string(),
-        email: update_request.email.unwrap_or("demo@nivaro.com".to_string()),
+        email: update_request
+            .email
+            .unwrap_or("demo@nivaro.com".to_string()),
         name: update_request.name.unwrap_or("Demo User".to_string()),
         avatar: None,
         created_at: now.clone(),
@@ -265,10 +281,12 @@ async fn delete_account(req: Request) -> Result<Response> {
     };
 
     let response = ApiResponse::success("Account deleted successfully");
-    Ok(Response::from_json(&response)?
-        .with_headers(worker::Headers::from_iter(vec![
-            ("Set-Cookie".to_string(), "auth_token=; HttpOnly; Secure; SameSite=Strict; Max-Age=0".to_string())
-        ])))
+    Ok(
+        Response::from_json(&response)?.with_headers(worker::Headers::from_iter(vec![(
+            "Set-Cookie".to_string(),
+            "auth_token=; HttpOnly; Secure; SameSite=Strict; Max-Age=0".to_string(),
+        )])),
+    )
 }
 
 async fn social_login(mut req: Request) -> Result<Response> {
@@ -304,10 +322,14 @@ async fn social_login(mut req: Request) -> Result<Response> {
         error: None,
     };
 
-    Ok(Response::from_json(&response)?
-        .with_headers(worker::Headers::from_iter(vec![
-            ("Set-Cookie".to_string(), format!("auth_token={}; HttpOnly; Secure; SameSite=Strict; Max-Age=86400", token))
-        ])))
+    Ok(
+        Response::from_json(&response)?.with_headers(worker::Headers::from_iter(vec![(
+            "Set-Cookie".to_string(),
+            format!(
+                "auth_token={token}; HttpOnly; Secure; SameSite=Strict; Max-Age=86400"
+            ),
+        )])),
+    )
 }
 
 async fn get_user_sessions(req: Request) -> Result<Response> {
@@ -328,10 +350,12 @@ async fn revoke_all_sessions(req: Request) -> Result<Response> {
     };
 
     let response = ApiResponse::success("All sessions revoked successfully");
-    Ok(Response::from_json(&response)?
-        .with_headers(worker::Headers::from_iter(vec![
-            ("Set-Cookie".to_string(), "auth_token=; HttpOnly; Secure; SameSite=Strict; Max-Age=0".to_string())
-        ])))
+    Ok(
+        Response::from_json(&response)?.with_headers(worker::Headers::from_iter(vec![(
+            "Set-Cookie".to_string(),
+            "auth_token=; HttpOnly; Secure; SameSite=Strict; Max-Age=0".to_string(),
+        )])),
+    )
 }
 
 // Helper functions (mock implementations)
@@ -340,7 +364,7 @@ fn is_valid_email(email: &str) -> bool {
 }
 
 fn is_strong_password(password: &str) -> bool {
-    password.len() >= 8 
+    password.len() >= 8
         && password.chars().any(|c| c.is_uppercase())
         && password.chars().any(|c| c.is_lowercase())
         && password.chars().any(|c| c.is_numeric())
@@ -379,27 +403,27 @@ fn create_jwt_token(user: &User) -> String {
 fn extract_token(req: &Request) -> Option<String> {
     // Try to get token from Authorization header first
     if let Ok(Some(auth_header)) = req.headers().get("Authorization") {
-        if auth_header.starts_with("Bearer ") {
-            return Some(auth_header[7..].to_string());
+        if let Some(stripped) = auth_header.strip_prefix("Bearer ") {
+            return Some(stripped.to_string());
         }
     }
-    
+
     // Try to get token from cookie
     if let Ok(Some(cookie_header)) = req.headers().get("Cookie") {
         for cookie in cookie_header.split(';') {
             let cookie = cookie.trim();
-            if cookie.starts_with("auth_token=") {
-                return Some(cookie[11..].to_string());
+            if let Some(stripped) = cookie.strip_prefix("auth_token=") {
+                return Some(stripped.to_string());
             }
         }
     }
-    
+
     None
 }
 
 fn get_user_id_from_token(req: &Request) -> Option<String> {
     let _token = extract_token(req)?;
-    
+
     // Mock token validation - in real app decode JWT
     Some("user-1".to_string())
 }

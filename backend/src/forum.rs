@@ -1,7 +1,7 @@
-use worker::*;
-use serde::{Deserialize, Serialize};
 use chrono::Utc;
+use serde::{Deserialize, Serialize};
 use uuid::Uuid;
+use worker::*;
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct Question {
@@ -127,7 +127,7 @@ pub async fn get_questions() -> Result<Response> {
 
 pub async fn create_question(mut req: Request) -> Result<Response> {
     let create_req: CreateQuestionRequest = req.json().await?;
-    
+
     let new_question = Question {
         id: Uuid::new_v4().to_string(),
         title: create_req.title,
@@ -140,36 +140,38 @@ pub async fn create_question(mut req: Request) -> Result<Response> {
         updated_at: Utc::now().to_rfc3339(),
         resolved_at: None,
     };
-    
+
     Response::from_json(&new_question)
 }
 
 pub async fn claim_question(id: &str, mut req: Request) -> Result<Response> {
     let claim_req: ClaimQuestionRequest = req.json().await?;
-    
+
     // In a real app, this would update the database
-    let mut question = get_mock_questions().into_iter()
+    let mut question = get_mock_questions()
+        .into_iter()
         .find(|q| q.id == id)
         .ok_or_else(|| worker::Error::RustError("Question not found".to_string()))?;
-    
+
     question.status = "claimed".to_string();
     question.claimed_by = Some(claim_req.claimed_by);
     question.updated_at = js_sys::Date::new_0().to_iso_string().as_string().unwrap();
-    
+
     Response::from_json(&question)
 }
 
 pub async fn resolve_question(id: &str) -> Result<Response> {
     // In a real app, this would update the database
-    let mut question = get_mock_questions().into_iter()
+    let mut question = get_mock_questions()
+        .into_iter()
         .find(|q| q.id == id)
         .ok_or_else(|| worker::Error::RustError("Question not found".to_string()))?;
-    
+
     question.status = "resolved".to_string();
     let now = js_sys::Date::new_0().to_iso_string().as_string().unwrap();
     question.updated_at = now.clone();
     question.resolved_at = Some(now);
-    
+
     Response::from_json(&question)
 }
 

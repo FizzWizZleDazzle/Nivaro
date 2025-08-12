@@ -1,7 +1,7 @@
+pub mod auth;
 pub mod clubs;
 pub mod members;
-pub mod auth;
 
+pub use auth::*;
 pub use clubs::*;
 pub use members::*;
-pub use auth::*;

@@ -178,7 +178,7 @@ pub struct Course {
     pub is_published: bool,
     pub difficulty: CourseDifficulty,
     pub estimated_duration: u32, // in minutes
-    pub created_by: String, // admin user id
+    pub created_by: String,      // admin user id
     pub created_at: String,
     pub updated_at: String,
     pub lessons: Vec<Lesson>,

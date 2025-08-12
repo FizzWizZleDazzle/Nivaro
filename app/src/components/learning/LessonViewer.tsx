@@ -99,8 +99,34 @@ export default function LessonViewer({ courseId, lessonId, onProgressUpdate }: L
 
   const renderVideoEmbed = (embedId: string) => {
     // Simple YouTube embed - in a real app, you'd handle multiple video platforms
-    if (embedId.includes('youtube.com') || embedId.includes('youtu.be')) {
-      const videoId = embedId.split('/').pop()?.split('?')[0];
+    let isYouTube = false;
+    let videoId: string | undefined;
+    try {
+      const url = new URL(embedId);
+      const allowedYouTubeHosts = [
+        'youtube.com',
+        'www.youtube.com',
+        'youtu.be'
+      ];
+      if (allowedYouTubeHosts.includes(url.hostname)) {
+        isYouTube = true;
+        if (url.hostname === 'youtu.be') {
+          // youtu.be/<id>
+          videoId = url.pathname.slice(1);
+        } else if (url.hostname === 'youtube.com' || url.hostname === 'www.youtube.com') {
+          // youtube.com/watch?v=<id>
+          if (url.pathname === '/watch') {
+            videoId = url.searchParams.get('v') || undefined;
+          } else if (url.pathname.startsWith('/embed/')) {
+            videoId = url.pathname.split('/embed/')[1];
+          }
+        }
+      }
+    } catch (e) {
+      // If embedId is not a valid URL, fallback to old logic (could be just an ID)
+      // Optionally, you could add more robust error handling here
+    }
+    if (isYouTube && videoId) {
       return (
         <div className="aspect-video mb-6">
           <iframe

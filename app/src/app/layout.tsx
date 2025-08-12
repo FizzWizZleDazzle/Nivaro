@@ -6,6 +6,7 @@ import Footer from "@/components/Footer";
 import { Analytics } from "@/components/Analytics";
 import { CookieConsent } from "@/components/CookieConsent";
 import { generateStructuredData } from "@/components/SEO";
+import ErrorBoundary from "@/components/ErrorBoundary";
 
 export const metadata: Metadata = {
   title: "Nivaro - Complete Club Management Platform | Meetings, Collaboration & Learning",
@@ -110,14 +111,16 @@ export default function RootLayout({
         <Analytics />
       </head>
       <body className="font-sans antialiased min-h-screen flex flex-col">
-        <ClientWrapper>
-          <Navigation />
-          <main className="flex-1">
-            {children}
-          </main>
-          <Footer />
-        </ClientWrapper>
-        <CookieConsent />
+        <ErrorBoundary>
+          <ClientWrapper>
+            <Navigation />
+            <main className="flex-1">
+              {children}
+            </main>
+            <Footer />
+          </ClientWrapper>
+          <CookieConsent />
+        </ErrorBoundary>
       </body>
     </html>
   );
