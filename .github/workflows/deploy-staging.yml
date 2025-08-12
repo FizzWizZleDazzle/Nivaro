@@ -21,8 +21,6 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: ${{ env.NODE_VERSION }}
-        cache: 'npm'
-        cache-dependency-path: app/package-lock.json
         
     - name: Install dependencies
       run: |
@@ -33,13 +31,16 @@ jobs:
       run: |
         cd app
         npm run build
+      env:
+        NEXT_PUBLIC_API_URL: https://nivaroapi.fizzwizzledazzle.dev
+        NEXT_PUBLIC_ENVIRONMENT: staging
         
     - name: Deploy to Cloudflare Pages (Staging)
       uses: cloudflare/wrangler-action@v3
       with:
         apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-        command: pages deploy app/out --project-name=nivaro-frontend-staging --compatibility-date=2025-01-01
+        command: pages deploy app/.next --project-name=nivaro-staging --compatibility-date=2025-01-01
 
   deploy-backend-staging:
     name: Deploy Backend to Staging
