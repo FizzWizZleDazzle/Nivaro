@@ -330,7 +330,7 @@ pub struct AuthResponse {
     pub error: Option<String>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize)]
 pub struct SessionInfo {
     pub user: User,
     pub session: Session,
