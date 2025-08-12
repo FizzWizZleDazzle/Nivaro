@@ -9,3 +9,13 @@ command = "cargo install -q worker-build && worker-build --release"
 binding = "DB"
 database_name = "nivaro-auth"
 database_id = "placeholder-for-real-deployment"
+
+# Production environment
+[env.production]
+name = "nivaro-backend"
+vars = { ENVIRONMENT = "production" }
+
+# Staging environment  
+[env.staging]
+name = "nivaro-backend-staging"
+vars = { ENVIRONMENT = "staging" }
