@@ -35,23 +35,18 @@ jobs:
     - name: Build frontend
       run: |
         cd app
-        npm run build
+        npm run export
       env:
         NEXT_PUBLIC_API_URL: https://nivaroapi.fizzwizzledazzle.dev
         NEXT_PUBLIC_ENVIRONMENT: staging
         
-    - name: Prepare static files
-      run: |
-        cd app
-        mkdir -p deploy
-        cp -r .next/static deploy/
-        cp -r public/* deploy/ 2>/dev/null || true
+  # Removed manual static file copying; 'next export' creates 'out' directory
         
     - name: Deploy to GitHub Pages (Staging)
       uses: peaceiris/actions-gh-pages@v4
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: ./app/deploy
+        publish_dir: ./app/out
         destination_dir: staging
         force_orphan: true
 
