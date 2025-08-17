@@ -18,13 +18,13 @@ describe('Landing Page', () => {
     });
     expect(featuresHeading).toBeInTheDocument();
     
-    // Check for individual feature cards
-    expect(screen.getByText('Smart Meeting Management')).toBeInTheDocument();
-    expect(screen.getByText('Project Collaboration')).toBeInTheDocument();
-    expect(screen.getByText('Learning Center')).toBeInTheDocument();
-    expect(screen.getByText('Help & Mentorship')).toBeInTheDocument();
-    expect(screen.getByText('Smart Announcements')).toBeInTheDocument();
-    expect(screen.getByText('Club Management')).toBeInTheDocument();
+    // Check for individual feature cards headings
+    expect(screen.getByRole('heading', { name: 'Smart Meeting Management', level: 3 })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Project Collaboration', level: 3 })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Learning Center', level: 3 })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Help & Mentorship', level: 3 })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Smart Announcements', level: 3 })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Club Management', level: 3 })).toBeInTheDocument();
   });
 
   it('renders testimonials section', () => {

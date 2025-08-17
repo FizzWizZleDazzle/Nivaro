@@ -7,38 +7,35 @@ describe('Navigation Links', () => {
     render(<Home />)
     
     // Check main heading
-    expect(screen.getByRole('heading', { name: /nivaro/i, level: 1 })).toBeInTheDocument()
-    expect(screen.getByText('Club Management Made Simple')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /transform your club management made simple/i, level: 1 })).toBeInTheDocument()
+    expect(screen.getByText('Made Simple')).toBeInTheDocument()
     
-    // Check onboarding link
-    expect(screen.getByRole('link', { name: /start onboarding/i })).toHaveAttribute('href', '/onboarding')
+    // Check main action buttons
+    expect(screen.getByRole('link', { name: /start creating your club/i })).toHaveAttribute('href', '/onboarding/create')
+    expect(screen.getByRole('link', { name: /join an existing club/i })).toHaveAttribute('href', '/onboarding/join')
     
-    // Check getting started links
-    expect(screen.getByRole('link', { name: /create a club/i })).toHaveAttribute('href', '/onboarding/create')
-    expect(screen.getByRole('link', { name: /join with invite code/i })).toHaveAttribute('href', '/onboarding/join')
-    
-    // Check quick links
-    expect(screen.getByRole('link', { name: /view meetings & events/i })).toHaveAttribute('href', '/meetings')
-    expect(screen.getByRole('link', { name: /project & code collaboration/i })).toHaveAttribute('href', '/project-collaboration')
-    expect(screen.getByRole('link', { name: /learning center/i })).toHaveAttribute('href', '/learning')
-    expect(screen.getByRole('link', { name: /help & mentorship forum/i })).toHaveAttribute('href', '/forum')
-    expect(screen.getByRole('link', { name: /announcements & notifications/i })).toHaveAttribute('href', '/announcements')
-    expect(screen.getByRole('link', { name: /view demo club/i })).toHaveAttribute('href', '/club/club-1')
+    // Check feature section links
+    expect(screen.getByRole('link', { name: /explore meetings/i })).toHaveAttribute('href', '/meetings')
+    expect(screen.getByRole('link', { name: /start collaborating/i })).toHaveAttribute('href', '/project-collaboration')
+    expect(screen.getByRole('link', { name: /explore learning/i })).toHaveAttribute('href', '/learning')
+    expect(screen.getByRole('link', { name: /join forum/i })).toHaveAttribute('href', '/forum')
+    expect(screen.getByRole('link', { name: /view announcements/i })).toHaveAttribute('href', '/announcements')
+    expect(screen.getByRole('link', { name: /explore demo/i })).toHaveAttribute('href', '/club/club-1')
   })
 
   it('has proper styling classes for navigation links', () => {
     render(<Home />)
     
-    const onboardingLink = screen.getByRole('link', { name: /start onboarding/i })
-    expect(onboardingLink).toHaveClass('bg-blue-600', 'text-white')
+    const createClubLink = screen.getByRole('link', { name: /start creating your club/i })
+    expect(createClubLink).toHaveClass('bg-blue-600', 'text-white')
     
-    const createClubLink = screen.getByRole('link', { name: /create a club/i })
-    expect(createClubLink).toHaveClass('bg-green-600', 'text-white')
+    const joinClubLink = screen.getByRole('link', { name: /join an existing club/i })
+    expect(joinClubLink).toHaveClass('border-2', 'border-blue-600', 'text-blue-600')
     
-    const meetingsLink = screen.getByRole('link', { name: /view meetings & events/i })
-    expect(meetingsLink).toHaveClass('bg-green-600', 'text-white')
+    const meetingsLink = screen.getByRole('link', { name: /explore meetings/i })
+    expect(meetingsLink).toHaveClass('text-green-600')
     
-    const projectLink = screen.getByRole('link', { name: /project & code collaboration/i })
-    expect(projectLink).toHaveClass('bg-purple-600', 'text-white')
+    const projectLink = screen.getByRole('link', { name: /start collaborating/i })
+    expect(projectLink).toHaveClass('text-purple-600')
   })
 })
