@@ -14,7 +14,7 @@
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "export": "next export",
-    "build:next-on-pages": "next-on-pages build"
+    "build:next-on-pages": "next-on-pages"
   },
   "dependencies": {
     "@types/react-syntax-highlighter": "^15.5.13",
