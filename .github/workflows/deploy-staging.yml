@@ -32,9 +32,8 @@ jobs:
         npm install --legacy-peer-deps
 
     - name: Build Next.js for Cloudflare Workers
-      run: |
-        cd app
-        npx @cloudflare/next-on-pages@latest build
+      working-directory: app
+      run: npm run build:next-on-pages
       env:
         NEXT_PUBLIC_API_URL: https://nivaroapi.fizzwizzledazzle.dev
         NEXT_PUBLIC_ENVIRONMENT: staging
