@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { mockInviteCodes, mockClubs } from '../../../lib/mockData';
+import { mockInviteCodes, mockClubs } from '../../../../lib/mockData';
 
 export default function JoinClub() {
   const router = useRouter();

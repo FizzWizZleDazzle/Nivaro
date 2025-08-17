@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '../../contexts/AuthContext';
-import { isValidEmail, isStrongPassword } from '../../lib/auth';
+import { useAuth } from '../../../contexts/AuthContext';
+import { isValidEmail, isStrongPassword } from '../../../lib/auth';
 
 export default function ProfilePage() {
   const router = useRouter();

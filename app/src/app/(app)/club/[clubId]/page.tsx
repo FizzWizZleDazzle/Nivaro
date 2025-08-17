@@ -1,10 +1,10 @@
 'use client';
 
 import { useParams } from 'next/navigation';
-import { mockClubs, mockEvents, mockAnnouncements, mockProjects, mockMembers } from '../../../lib/mockData';
-import { MemberRole } from '../../../lib/types';
-import { isAdmin } from '../../../lib/auth';
-import { useAuth } from '../../../contexts/AuthContext';
+import { mockClubs, mockEvents, mockAnnouncements, mockProjects, mockMembers } from '../../../../lib/mockData';
+import { MemberRole } from '../../../../lib/types';
+import { isAdmin } from '../../../../lib/auth';
+import { useAuth } from '../../../../contexts/AuthContext';
 
 export default function ClubDashboard() {
   const params = useParams();

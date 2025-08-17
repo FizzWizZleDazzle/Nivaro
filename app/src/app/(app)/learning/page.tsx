@@ -1,10 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import CourseList from '../../components/learning/CourseList';
-import CourseCreator from '../../components/learning/CourseCreator';
-import LessonViewer from '../../components/learning/LessonViewer';
-import { Course } from '../../types/learning';
+import CourseList from '../../../components/learning/CourseList';
+import CourseCreator from '../../../components/learning/CourseCreator';
+import LessonViewer from '../../../components/learning/LessonViewer';
+import { Course } from '../../../types/learning';
 
 export default function LearningPage() {
   const [activeTab, setActiveTab] = useState<'courses' | 'create' | 'lesson'>('courses');
