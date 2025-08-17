@@ -408,11 +408,13 @@ describe('Learning Module', () => {
     it('shows course details and metadata', () => {
       render(<MockCoursesList />)
       
-      expect(screen.getByText('Difficulty: beginner')).toBeInTheDocument()
-      expect(screen.getByText('Category: programming')).toBeInTheDocument()
-      expect(screen.getByText('8 hours')).toBeInTheDocument()
-      expect(screen.getByText('Rating: 4.5/5')).toBeInTheDocument()
-      expect(screen.getByText('45 enrolled')).toBeInTheDocument()
+      // Check for specific course details using more specific selectors
+      const firstCourse = screen.getByTestId('course-1')
+      expect(firstCourse).toHaveTextContent('Difficulty: beginner')
+      expect(firstCourse).toHaveTextContent('Category: programming')
+      expect(firstCourse).toHaveTextContent('8 hours')
+      expect(firstCourse).toHaveTextContent('Rating: 4.5/5')
+      expect(firstCourse).toHaveTextContent('45 enrolled')
     })
 
     it('allows filtering courses by category', async () => {
