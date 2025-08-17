@@ -14,41 +14,38 @@ env:
   
 jobs:
   deploy-frontend-staging:
-    name: Deploy Frontend to Staging
+    name: Deploy Frontend to Cloudflare Workers (Next.js)
     runs-on: ubuntu-latest
     environment: staging
-    
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-      
+
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
         node-version: ${{ env.NODE_VERSION }}
-        
+
     - name: Install dependencies
       run: |
         cd app
         npm install --legacy-peer-deps
-        
-    - name: Build frontend
+
+    - name: Build Next.js for Cloudflare Workers
       run: |
         cd app
-        npm run export
+        npx @cloudflare/next-on-pages@latest build
       env:
         NEXT_PUBLIC_API_URL: https://nivaroapi.fizzwizzledazzle.dev
         NEXT_PUBLIC_ENVIRONMENT: staging
-        
-  # Removed manual static file copying; 'next export' creates 'out' directory
-        
-    - name: Deploy to GitHub Pages (Staging)
-      uses: peaceiris/actions-gh-pages@v4
+
+    - name: Deploy to Cloudflare Workers
+      uses: cloudflare/wrangler-action@v3
       with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: ./app/out
-        destination_dir: staging
-        force_orphan: true
+        apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        workingDirectory: app
+        command: deploy
 
   deploy-backend-staging:
     name: Deploy Backend to Staging
