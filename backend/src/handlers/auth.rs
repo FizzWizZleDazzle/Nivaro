@@ -524,7 +524,7 @@ fn extract_token(req: &Request) -> Option<String> {
     None
 }
 
-fn get_user_id_from_token(req: &Request, ctx: &RouteContext<()>) -> Option<String> {
+pub fn get_user_id_from_token(req: &Request, ctx: &RouteContext<()>) -> Option<String> {
     let token = extract_token(req)?;
     
     let secret = match get_jwt_secret(ctx) {
