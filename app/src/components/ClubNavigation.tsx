@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { mockClubs, mockMembers } from '../lib/mockData';
+import { useClub, useClubMembers } from '../lib/hooks';
 import { MemberRole } from '../lib/types';
 import { isAdmin } from '../lib/auth';
 import { useAuth } from '../contexts/AuthContext';
@@ -15,13 +15,48 @@ export default function ClubNavigation({ clubId }: ClubNavigationProps) {
   const pathname = usePathname();
   const { user } = useAuth();
   
-  // Find the club and current user's membership
-  const club = mockClubs.find(c => c.id === clubId);
-  const membership = mockMembers.find(m => m.clubId === clubId && m.userId === user?.id);
+  // Use API hooks to fetch data
+  const { data: club, loading: clubLoading, error: clubError } = useClub(clubId);
+  const { data: members, loading: membersLoading, error: membersError } = useClubMembers(clubId);
+  
+  // Find current user's membership
+  const membership = members.find(m => m.clubId === clubId && m.userId === user?.id);
   const userRole = membership?.role || MemberRole.MEMBER;
 
-  if (!club) {
-    return null;
+  if (clubLoading || membersLoading) {
+    return (
+      <nav className="bg-white shadow-sm border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between h-16">
+            <div className="flex items-center">
+              <Link href="/" className="text-xl font-bold text-blue-600 mr-8">
+                Nivaro
+              </Link>
+              <div className="animate-pulse">
+                <div className="h-4 bg-gray-200 rounded w-32"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </nav>
+    );
+  }
+
+  if (clubError || membersError || !club) {
+    return (
+      <nav className="bg-white shadow-sm border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between h-16">
+            <div className="flex items-center">
+              <Link href="/" className="text-xl font-bold text-blue-600 mr-8">
+                Nivaro
+              </Link>
+              <span className="text-red-600">Error loading club data</span>
+            </div>
+          </div>
+        </div>
+      </nav>
+    );
   }
 
   const navigation = [

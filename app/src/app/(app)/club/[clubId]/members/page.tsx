@@ -1,7 +1,7 @@
 'use client';
 
 import { useParams } from 'next/navigation';
-import { mockClubs, mockMembers } from '../../../../../lib/mockData';
+import { useClub, useClubMembers } from '../../../../../lib/hooks';
 import { MemberRole } from '../../../../../lib/types';
 import { isAdmin } from '../../../../../lib/auth';
 import { useAuth } from '../../../../../contexts/AuthContext';
@@ -11,24 +11,42 @@ export default function MembersPage() {
   const clubId = params.clubId as string;
   const { user } = useAuth();
   
-  // Find the club and user's membership
-  const club = mockClubs.find(c => c.id === clubId);
-  const membership = mockMembers.find(m => m.clubId === clubId && m.userId === user?.id);
-  const userRole = membership?.role || MemberRole.MEMBER;
+  // Use API hooks to fetch data
+  const { data: club, loading: clubLoading, error: clubError } = useClub(clubId);
+  const { data: members, loading: membersLoading, error: membersError } = useClubMembers(clubId);
   
-  // Filter members for this club
-  const clubMembers = mockMembers.filter(m => m.clubId === clubId);
+  // Find user's membership
+  const membership = members.find(m => m.clubId === clubId && m.userId === user?.id);
+  const userRole = membership?.role || MemberRole.MEMBER;
 
-  if (!club) {
+  // Loading state
+  if (clubLoading || membersLoading) {
     return (
-      <div className="text-center py-12">
-        <h1 className="text-2xl font-bold text-gray-900">Club not found</h1>
+      <div className="space-y-6 p-6">
+        <div className="animate-pulse">
+          <div className="h-8 bg-gray-200 rounded w-64 mb-4"></div>
+          <div className="space-y-3">
+            {[1, 2, 3].map(i => (
+              <div key={i} className="h-16 bg-gray-200 rounded-lg"></div>
+            ))}
+          </div>
+        </div>
       </div>
     );
   }
 
-  const adminMembers = clubMembers.filter(m => m.role === MemberRole.ADMIN);
-  const regularMembers = clubMembers.filter(m => m.role === MemberRole.MEMBER);
+  // Error state
+  if (clubError || membersError || !club) {
+    return (
+      <div className="text-center py-12">
+        <h1 className="text-2xl font-bold text-gray-900">Error loading data</h1>
+        <p className="text-gray-600 mt-2">{clubError || membersError || "Club not found"}</p>
+      </div>
+    );
+  }
+
+  const adminMembers = members.filter(m => m.role === MemberRole.ADMIN);
+  const regularMembers = members.filter(m => m.role === MemberRole.MEMBER);
 
   return (
     <div className="space-y-6">
@@ -37,7 +55,7 @@ export default function MembersPage() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Members</h1>
           <p className="text-gray-600">
-            {clubMembers.length} member{clubMembers.length !== 1 ? 's' : ''} in {club.name}
+            {members.length} member{members.length !== 1 ? 's' : ''} in {club.name}
           </p>
         </div>
         {isAdmin(userRole) && (
