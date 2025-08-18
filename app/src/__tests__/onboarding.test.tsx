@@ -1,8 +1,8 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import OnboardingLanding from '../app/onboarding/page';
-import ProfileSetup from '../app/onboarding/profile/page';
-import OnboardingTour from '../app/onboarding/tour/page';
+import OnboardingLanding from '../app/(app)/onboarding/page';
+import ProfileSetup from '../app/(app)/onboarding/profile/page';
+import OnboardingTour from '../app/(app)/onboarding/tour/page';
 
 // Mock Next.js navigation
 jest.mock('next/navigation', () => ({
@@ -37,7 +37,11 @@ describe('Onboarding Flow', () => {
       toString: jest.fn(),
       size: 0,
       [Symbol.iterator]: jest.fn(),
-    });
+      append: jest.fn(),
+      delete: jest.fn(),
+      set: jest.fn(),
+      sort: jest.fn(),
+    } as any);
   });
 
   describe('Onboarding Landing Page', () => {
@@ -104,7 +108,11 @@ describe('Onboarding Flow', () => {
         toString: jest.fn(),
         size: 0,
         [Symbol.iterator]: jest.fn(),
-      });
+        append: jest.fn(),
+        delete: jest.fn(),
+        set: jest.fn(),
+        sort: jest.fn(),
+      } as any);
     });
 
     it('renders profile setup form with all fields', () => {
@@ -168,7 +176,11 @@ describe('Onboarding Flow', () => {
         toString: jest.fn(),
         size: 0,
         [Symbol.iterator]: jest.fn(),
-      });
+        append: jest.fn(),
+        delete: jest.fn(),
+        set: jest.fn(),
+        sort: jest.fn(),
+      } as any);
       
       render(<ProfileSetup />);
       

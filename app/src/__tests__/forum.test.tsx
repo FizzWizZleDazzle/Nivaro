@@ -1,10 +1,10 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import React from 'react'
 
 // Mock forum components
 const MockForumQuestions = () => {
-  const [questions, setQuestions] = React.useState([
+  const [questions] = React.useState([
     {
       id: '1',
       title: 'How to handle state in React?',

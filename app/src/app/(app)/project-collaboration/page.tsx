@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
-import { KanbanBoard, RepositoryLinker, CodeSnippetShare } from '../../components/project-collaboration';
-import { Task, Repository, CodeSnippet } from '../../components/project-collaboration/types';
+import { KanbanBoard, RepositoryLinker, CodeSnippetShare } from '../../../components/project-collaboration';
+import { Task, Repository, CodeSnippet } from '../../../components/project-collaboration/types';
 
 type ActiveTab = 'kanban' | 'repos' | 'snippets';
 

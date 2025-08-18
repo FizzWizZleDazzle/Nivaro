@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Course, CreateCourseRequest, CreateLessonRequest, LessonContent } from '../../types/learning';
+import { Course, CreateCourseRequest, CreateLessonRequest } from '../../types/learning';
 import { learningApi } from '../../lib/learning-api';
 
 interface CourseCreatorProps {

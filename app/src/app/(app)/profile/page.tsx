@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '../../contexts/AuthContext';
-import { isValidEmail, isStrongPassword } from '../../lib/auth';
+import { useAuth } from '../../../contexts/AuthContext';
+import { isValidEmail, isStrongPassword } from '../../../lib/auth';
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -107,7 +107,7 @@ export default function ProfilePage() {
         email: profileData.email,
       });
       setProfileSuccess('Profile updated successfully!');
-    } catch (error) {
+    } catch {
       setProfileErrors({ general: 'Failed to update profile. Please try again.' });
     }
   };
@@ -148,7 +148,7 @@ export default function ProfilePage() {
         newPassword: '',
         confirmPassword: '',
       });
-    } catch (error) {
+    } catch {
       setPasswordErrors({ general: 'Failed to change password. Please try again.' });
     }
   };
@@ -162,7 +162,7 @@ export default function ProfilePage() {
       try {
         await deleteAccount();
         router.push('/');
-      } catch (error) {
+      } catch {
         alert('Failed to delete account. Please try again.');
       }
     }

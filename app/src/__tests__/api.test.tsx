@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import React from 'react'
 
 // Mock fetch for API testing
 global.fetch = jest.fn()

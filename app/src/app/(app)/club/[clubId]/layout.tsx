@@ -1,7 +1,7 @@
 'use client';
 
 import { ReactNode, use } from 'react';
-import ClubNavigation from '../../../components/ClubNavigation';
+import ClubNavigation from '../../../../components/ClubNavigation';
 
 export default function ClubLayout({
   children,

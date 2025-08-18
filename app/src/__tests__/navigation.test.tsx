@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react'
-import Home from '../app/page'
+import Home from '../app/(marketing)/page'
 
 // Test 1: Verify all navigation links work from home page
 describe('Navigation Links', () => {

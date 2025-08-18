@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Lesson, CodeSnippet } from '../../types/learning';
 import { learningApi } from '../../lib/learning-api';
 
@@ -18,18 +18,7 @@ export default function LessonViewer({ courseId, lessonId, onProgressUpdate }: L
   const [timeSpent, setTimeSpent] = useState(0);
   const [startTime] = useState(Date.now());
 
-  useEffect(() => {
-    fetchLesson();
-    
-    // Track time spent
-    const interval = setInterval(() => {
-      setTimeSpent(Math.floor((Date.now() - startTime) / 1000 / 60)); // in minutes
-    }, 60000); // Update every minute
-
-    return () => clearInterval(interval);
-  }, [courseId, lessonId]);
-
-  const fetchLesson = async () => {
+  const fetchLesson = useCallback(async () => {
     try {
       setLoading(true);
       const lessonData = await learningApi.getLesson(courseId, lessonId);
@@ -40,7 +29,18 @@ export default function LessonViewer({ courseId, lessonId, onProgressUpdate }: L
     } finally {
       setLoading(false);
     }
-  };
+  }, [courseId, lessonId]);
+
+  useEffect(() => {
+    fetchLesson();
+    
+    // Track time spent
+    const interval = setInterval(() => {
+      setTimeSpent(Math.floor((Date.now() - startTime) / 1000 / 60)); // in minutes
+    }, 60000); // Update every minute
+
+    return () => clearInterval(interval);
+  }, [fetchLesson, startTime]);
 
   const handleMarkComplete = async () => {
     if (!lesson) return;
@@ -122,7 +122,7 @@ export default function LessonViewer({ courseId, lessonId, onProgressUpdate }: L
           }
         }
       }
-    } catch (e) {
+    } catch {
       // If embedId is not a valid URL, fallback to old logic (could be just an ID)
       // Optionally, you could add more robust error handling here
     }
