@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import ClientWrapper from "@/components/ClientWrapper";
 import ErrorBoundary from "@/components/ErrorBoundary";
+import AuthGuard from "@/components/AuthGuard";
 
 export const metadata: Metadata = {
   title: "Nivaro",
@@ -18,7 +19,9 @@ export default function RootLayout({
       <body className="font-sans antialiased min-h-screen">
         <ErrorBoundary>
           <ClientWrapper>
-            {children}
+            <AuthGuard>
+              {children}
+            </AuthGuard>
           </ClientWrapper>
         </ErrorBoundary>
       </body>
