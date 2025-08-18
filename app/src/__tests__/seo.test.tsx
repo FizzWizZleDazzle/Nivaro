@@ -85,7 +85,7 @@ describe('generateStructuredData', () => {
   });
 
   it('generates WebSite structured data', () => {
-    const data = generateStructuredData('WebSite', {});
+    const data = generateStructuredData('WebSite', {}) as any;
     
     expect(data['@context']).toBe('https://schema.org');
     expect(data['@type']).toBe('WebSite');
@@ -96,7 +96,7 @@ describe('generateStructuredData', () => {
   it('generates Organization structured data', () => {
     const data = generateStructuredData('Organization', {
       socialLinks: ['https://twitter.com/nivaro']
-    });
+    }) as any;
     
     expect(data['@type']).toBe('Organization');
     expect(data.sameAs).toEqual(['https://twitter.com/nivaro']);
@@ -112,7 +112,7 @@ describe('generateStructuredData', () => {
       image: '/test-image.png'
     };
     
-    const data = generateStructuredData('Article', articleData);
+    const data = generateStructuredData('Article', articleData) as any;
     
     expect(data['@type']).toBe('Article');
     expect(data.headline).toBe('Test Article');
@@ -131,7 +131,7 @@ describe('generateStructuredData', () => {
       isOnline: true
     };
     
-    const data = generateStructuredData('Event', eventData);
+    const data = generateStructuredData('Event', eventData) as any;
     
     expect(data['@type']).toBe('Event');
     expect(data.name).toBe('Test Meeting');
@@ -140,7 +140,7 @@ describe('generateStructuredData', () => {
   });
 
   it('generates SoftwareApplication structured data', () => {
-    const data = generateStructuredData('SoftwareApplication', {});
+    const data = generateStructuredData('SoftwareApplication', {}) as any;
     
     expect(data['@type']).toBe('SoftwareApplication');
     expect(data.applicationCategory).toBe('BusinessApplication');

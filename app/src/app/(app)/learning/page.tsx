@@ -8,19 +8,11 @@ import { Course } from '../../../types/learning';
 
 export default function LearningPage() {
   const [activeTab, setActiveTab] = useState<'courses' | 'create' | 'lesson'>('courses');
-  const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
-  const [selectedLessonId, setSelectedLessonId] = useState<string | null>(null);
   const [isAdmin] = useState(true); // TODO: Get from user context/auth
 
-  const handleCourseCreated = (course: Course) => {
+  const handleCourseCreated = () => {
     setActiveTab('courses');
     // Optionally refresh the course list or add the new course to the state
-  };
-
-  const handleStartLesson = (course: Course, lessonId: string) => {
-    setSelectedCourse(course);
-    setSelectedLessonId(lessonId);
-    setActiveTab('lesson');
   };
 
   const handleProgressUpdate = (lessonId: string, completed: boolean, timeSpent: number) => {

@@ -26,12 +26,13 @@ Object.defineProperty(window, 'localStorage', {
 global.PerformanceObserver = jest.fn(() => ({
   observe: jest.fn(),
   disconnect: jest.fn(),
-}));
+})) as any;
+(global.PerformanceObserver as any).supportedEntryTypes = ['navigation', 'measure'];
 
 interface WindowWithAnalytics extends Window {
-  gtag?: (...args: unknown[]) => void;
-  dataLayer?: unknown[];
-  plausible?: (...args: unknown[]) => void;
+  gtag: (...args: unknown[]) => void;
+  dataLayer: unknown[];
+  plausible: ((...args: unknown[]) => void) & { q?: unknown[][]; };
 }
 
 describe('Analytics Component', () => {
@@ -41,9 +42,9 @@ describe('Analytics Component', () => {
     Object.assign(process.env, mockEnv);
     
     // Reset window objects
-    delete (window as WindowWithAnalytics).gtag;
-    delete (window as WindowWithAnalytics).dataLayer;
-    delete (window as WindowWithAnalytics).plausible;
+    delete (window as any).gtag;
+    delete (window as any).dataLayer;
+    delete (window as any).plausible;
   });
 
   it('renders without crashing when analytics disabled', () => {

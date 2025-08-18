@@ -1,12 +1,12 @@
 import { render, screen } from '@testing-library/react';
-import AboutPage from '@/app/about/page';
-import PricingPage from '@/app/pricing/page';
-import FAQPage from '@/app/faq/page';
-import TestimonialsPage from '@/app/testimonials/page';
-import TermsPage from '@/app/terms/page';
-import PrivacyPage from '@/app/privacy/page';
-import CookiesPage from '@/app/cookies/page';
-import ContactPage from '@/app/contact/page';
+import AboutPage from '@/app/(marketing)/about/page';
+import PricingPage from '@/app/(marketing)/pricing/page';
+import FAQPage from '@/app/(marketing)/faq/page';
+import TestimonialsPage from '@/app/(marketing)/testimonials/page';
+import TermsPage from '@/app/(marketing)/terms/page';
+import PrivacyPage from '@/app/(marketing)/privacy/page';
+import CookiesPage from '@/app/(marketing)/cookies/page';
+import ContactPage from '@/app/(marketing)/contact/page';
 
 // Mock Next.js router
 jest.mock('next/navigation', () => ({

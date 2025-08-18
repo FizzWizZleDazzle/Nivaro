@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import React from 'react'
 
@@ -140,7 +140,7 @@ const MockCreateMeeting = () => {
 
 const MockMeetingDetail = () => {
   const [rsvpStatus, setRsvpStatus] = React.useState('not_responded')
-  const [rsvps, setRsvps] = React.useState([
+  const [rsvps] = React.useState([
     { id: '1', userName: 'John Doe', status: 'yes' },
     { id: '2', userName: 'Jane Smith', status: 'yes' },
     { id: '3', userName: 'Mike Johnson', status: 'maybe' },

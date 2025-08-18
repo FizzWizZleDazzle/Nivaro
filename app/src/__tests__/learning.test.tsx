@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import React from 'react'
 
@@ -12,7 +12,12 @@ const MockCourseCreation = () => {
     estimatedHours: '',
   })
 
-  const [lessons, setLessons] = React.useState([])
+  const [lessons, setLessons] = React.useState<Array<{
+    id: string;
+    title: string;
+    content: string;
+    type: string;
+  }>>([]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setCourseData(prev => ({
@@ -161,7 +166,7 @@ const MockCoursesList = () => {
   ]
 
   const [filter, setFilter] = React.useState('all')
-  const [enrolledCourses, setEnrolledCourses] = React.useState([])
+  const [enrolledCourses, setEnrolledCourses] = React.useState<string[]>([]);
 
   const filteredCourses = filter === 'all' 
     ? courses 
@@ -222,7 +227,7 @@ const MockCoursesList = () => {
 const MockCourseViewer = () => {
   const [currentLesson, setCurrentLesson] = React.useState(0)
   const [progress, setProgress] = React.useState(0)
-  const [completedLessons, setCompletedLessons] = React.useState([])
+  const [completedLessons, setCompletedLessons] = React.useState<number[]>([])
 
   const course = {
     id: '1',

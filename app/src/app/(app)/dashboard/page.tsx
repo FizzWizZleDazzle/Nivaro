@@ -2,7 +2,7 @@
 
 import { useAuth } from '../../../contexts/AuthContext';
 import Link from 'next/link';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 
 // Sample data - in a real app, this would come from your backend
 interface DashboardStats {
@@ -21,8 +21,8 @@ interface RecentActivity {
 }
 
 export default function Dashboard() {
-  const { user, isLoading, isAuthenticated } = useAuth();
-  const [stats, setStats] = useState<DashboardStats>({
+  const { user, isLoading } = useAuth();
+  const [stats] = useState<DashboardStats>({
     upcomingMeetings: 3,
     activeProjects: 2,
     unreadAnnouncements: 5,

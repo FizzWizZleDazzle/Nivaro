@@ -49,7 +49,7 @@ export default function ForgotPasswordPage() {
       await forgotPassword(email);
       setSuccess('If an account with that email exists, a password reset link has been sent.');
       setEmail('');
-    } catch (error) {
+    } catch {
       setError('An error occurred. Please try again.');
     }
   };

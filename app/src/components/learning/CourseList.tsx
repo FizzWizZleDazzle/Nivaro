@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Course } from '../../types/learning';
 import { learningApi } from '../../lib/learning-api';
 
@@ -15,11 +15,7 @@ export default function CourseList({ clubId }: CourseListProps) {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
-  useEffect(() => {
-    fetchCourses();
-  }, [clubId, page]);
-
-  const fetchCourses = async () => {
+  const fetchCourses = useCallback(async () => {
     try {
       setLoading(true);
       const response = await learningApi.getCourses(clubId, page, 10);
@@ -32,7 +28,11 @@ export default function CourseList({ clubId }: CourseListProps) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [clubId, page]);
+
+  useEffect(() => {
+    fetchCourses();
+  }, [fetchCourses]);
 
   const getDifficultyColor = (difficulty: Course['difficulty']) => {
     switch (difficulty) {
