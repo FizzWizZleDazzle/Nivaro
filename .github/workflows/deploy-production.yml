@@ -39,25 +39,20 @@ jobs:
         cd app
         npm install --legacy-peer-deps
         
-    - name: Build frontend
-      run: |
-        cd app
-        npm run build
-        
-    - name: Prepare static files
-      run: |
-        cd app
-        mkdir -p deploy
-        cp -r .next/static deploy/
-        cp -r public/* deploy/ 2>/dev/null || true
-        
-    - name: Deploy to GitHub Pages (Production)
-      uses: peaceiris/actions-gh-pages@v4
+    - name: Build Next.js for Cloudflare Workers
+      working-directory: app
+      run: npm run build:next-on-pages
+      env:
+        NEXT_PUBLIC_API_URL: https://nivaroapi.fizzwizzledazzle.com
+        NEXT_PUBLIC_ENVIRONMENT: production
+
+    - name: Deploy to Cloudflare Workers
+      uses: cloudflare/wrangler-action@v3
       with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: ./app/deploy
-        destination_dir: production
-        force_orphan: true
+        apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        workingDirectory: app
+        command: deploy --env production
         
     - name: Create GitHub Release
       uses: actions/create-release@v1
