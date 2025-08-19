@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { mockInviteCodes, mockClubs } from '../../../../lib/mockData';
+import { membersApi, ApiError } from '../../../../lib/api';
 
 export default function JoinClub() {
   const router = useRouter();
@@ -16,25 +16,19 @@ export default function JoinClub() {
     setIsLoading(true);
     setError('');
 
-    // Mock invite code validation
-    setTimeout(() => {
-      const validCode = mockInviteCodes.find(code => 
-        code.code.toUpperCase() === inviteCode.toUpperCase() && 
-        new Date() < code.expiresAt &&
-        !code.usedBy
-      );
-
-      if (validCode) {
-        const club = mockClubs.find(c => c.id === validCode.clubId);
-        console.log('Joining club:', club);
-        
-        // Redirect to the club dashboard
-        router.push(`/club/${validCode.clubId}`);
+    try {
+      const member = await membersApi.join(inviteCode);
+      console.log('Successfully joined club:', member);
+      router.push(`/club/${member.clubId}`);
+    } catch (error) {
+      console.error('Failed to join club:', error);
+      if (error instanceof ApiError) {
+        setError(error.message);
       } else {
-        setError('Invalid or expired invite code. Please check and try again.');
-        setIsLoading(false);
+        setError('Failed to join club. Please try again.');
       }
-    }, 1000);
+      setIsLoading(false);
+    }
   };
 
   return (

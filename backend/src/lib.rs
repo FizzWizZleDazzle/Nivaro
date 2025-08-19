@@ -78,6 +78,27 @@ async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
         .post_async("/api/members/join", |req, ctx| async move {
             handle_members(req, ctx).await
         })
+        // Event endpoints
+        .get_async("/api/clubs/:club_id/events", |req, ctx| async move {
+            handle_events(req, ctx).await
+        })
+        .post_async("/api/events", |req, ctx| async move {
+            handle_events(req, ctx).await
+        })
+        // Announcement endpoints
+        .get_async("/api/clubs/:club_id/announcements", |req, ctx| async move {
+            handle_announcements(req, ctx).await
+        })
+        .post_async("/api/announcements", |req, ctx| async move {
+            handle_announcements(req, ctx).await
+        })
+        // Project endpoints
+        .get_async("/api/clubs/:club_id/projects", |req, ctx| async move {
+            handle_projects(req, ctx).await
+        })
+        .post_async("/api/projects", |req, ctx| async move {
+            handle_projects(req, ctx).await
+        })
         // Meeting endpoints
         .get_async("/api/meetings", |_, _| async move {
             let meetings = get_meetings().await;

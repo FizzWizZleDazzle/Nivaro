@@ -1,7 +1,7 @@
 'use client';
 
 import { useParams } from 'next/navigation';
-import { mockClubs, mockEvents, mockAnnouncements, mockProjects, mockMembers } from '../../../../lib/mockData';
+import { useClub, useClubMembers, useClubEvents, useClubAnnouncements, useClubProjects } from '../../../../lib/hooks';
 import { MemberRole } from '../../../../lib/types';
 import { isAdmin } from '../../../../lib/auth';
 import { useAuth } from '../../../../contexts/AuthContext';
@@ -11,36 +11,55 @@ export default function ClubDashboard() {
   const clubId = params.clubId as string;
   const { user } = useAuth();
   
-  // Find the club and user's membership
-  const club = mockClubs.find(c => c.id === clubId);
-  const membership = mockMembers.find(m => m.clubId === clubId && m.userId === user?.id);
-  const userRole = membership?.role || MemberRole.MEMBER;
+  // Use API hooks to fetch data
+  const { data: club, loading: clubLoading, error: clubError } = useClub(clubId);
+  const { data: members, loading: membersLoading, error: membersError } = useClubMembers(clubId);
+  const { data: events, loading: eventsLoading, error: eventsError } = useClubEvents(clubId);
+  const { data: announcements, loading: announcementsLoading, error: announcementsError } = useClubAnnouncements(clubId);
+  const { data: projects, loading: projectsLoading, error: projectsError } = useClubProjects(clubId);
   
-  // Filter data for this club
-  const clubEvents = mockEvents.filter(e => e.clubId === clubId);
-  const clubAnnouncements = mockAnnouncements.filter(a => a.clubId === clubId);
-  const clubProjects = mockProjects.filter(p => p.clubId === clubId);
-  const clubMembers = mockMembers.filter(m => m.clubId === clubId);
+  // Find user's membership
+  const membership = members.find(m => m.clubId === clubId && m.userId === user?.id);
+  const userRole = membership?.role || MemberRole.MEMBER;
 
-  if (!club) {
+  // Loading state
+  if (clubLoading || membersLoading || eventsLoading || announcementsLoading || projectsLoading) {
     return (
-      <div className="text-center py-12">
-        <h1 className="text-2xl font-bold text-gray-900">Club not found</h1>
-        <p className="text-gray-600 mt-2">The club you&apos;re looking for doesn&apos;t exist.</p>
+      <div className="space-y-6 p-6">
+        <div className="animate-pulse">
+          <div className="h-8 bg-gray-200 rounded w-64 mb-4"></div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1, 2, 3].map(i => (
+              <div key={i} className="h-64 bg-gray-200 rounded-lg"></div>
+            ))}
+          </div>
+        </div>
       </div>
     );
   }
 
-  const upcomingEvents = clubEvents
+  // Error state
+  if (clubError || membersError || eventsError || announcementsError || projectsError || !club) {
+    return (
+      <div className="text-center py-12">
+        <h1 className="text-2xl font-bold text-gray-900">Error loading club data</h1>
+        <p className="text-gray-600 mt-2">
+          {clubError || membersError || eventsError || announcementsError || projectsError || "Club not found"}
+        </p>
+      </div>
+    );
+  }
+
+  const upcomingEvents = events
     .filter(e => new Date(e.date) > new Date())
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
     .slice(0, 3);
 
-  const pinnedAnnouncements = clubAnnouncements
+  const pinnedAnnouncements = announcements
     .filter(a => a.pinned)
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
-  const activeProjects = clubProjects.filter(p => p.status === 'active');
+  const activeProjects = projects.filter(p => p.status === 'active');
 
   return (
     <div className="space-y-8">
@@ -51,8 +70,8 @@ export default function ClubDashboard() {
             <h1 className="text-3xl font-bold text-gray-900">{club.name}</h1>
             <p className="text-gray-600 mt-2">{club.description}</p>
             <div className="flex items-center mt-4 text-sm text-gray-500 space-x-6">
-              <span>{clubMembers.length} members</span>
-              <span>Created {club.createdAt.toLocaleDateString()}</span>
+              <span>{members.length} members</span>
+              <span>Created {new Date(club.createdAt).toLocaleDateString()}</span>
             </div>
           </div>
           {isAdmin(userRole) && (
@@ -101,7 +120,7 @@ export default function ClubDashboard() {
                   <h3 className="font-medium text-gray-900">{announcement.title}</h3>
                   <p className="text-sm text-gray-600 mt-1">{announcement.content}</p>
                   <p className="text-xs text-gray-500 mt-2">
-                    {announcement.createdAt.toLocaleDateString()}
+                    {new Date(announcement.createdAt).toLocaleDateString()}
                   </p>
                 </div>
               ))}
