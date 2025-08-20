@@ -1,7 +1,12 @@
 // API utilities for club management
 import { Club, Member, Event, Announcement, Project } from './types';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || '/api';
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 
+  (process.env.NEXT_PUBLIC_ENVIRONMENT === 'production'
+    ? 'https://nivaroapi.fizzwizzledazzle.com/api'
+    : process.env.NEXT_PUBLIC_ENVIRONMENT === 'staging'
+    ? 'https://nivaroapi.fizzwizzledazzle.dev/api'
+    : 'http://localhost:8788/api');
 
 class ApiError extends Error {
   constructor(

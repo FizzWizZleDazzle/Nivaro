@@ -11,6 +11,11 @@ pub async fn handle_members(req: Request, ctx: RouteContext<()>) -> Result<Respo
 
     match method {
         Method::Get => {
+            // Require authentication for viewing club members
+            if get_user_id_from_token(&req, &ctx).is_none() {
+                return Response::error("Unauthorized", 401);
+            }
+            
             // Extract club_id from path like /clubs/{club_id}/members
             let segments: Vec<&str> = path.split('/').collect();
             if let Some(pos) = segments.iter().position(|&x| x == "clubs") {

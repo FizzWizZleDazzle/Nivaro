@@ -1,6 +1,11 @@
 import { Meeting, CreateMeetingRequest, UpdateMeetingRequest, RSVP } from '@/types/meetings';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:8787';
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 
+  (process.env.NEXT_PUBLIC_ENVIRONMENT === 'production'
+    ? 'https://nivaroapi.fizzwizzledazzle.com'
+    : process.env.NEXT_PUBLIC_ENVIRONMENT === 'staging'
+    ? 'https://nivaroapi.fizzwizzledazzle.dev'
+    : 'http://localhost:8788');
 
 // Mock data for development - in a real app this would come from the backend
 const mockMeetings: Meeting[] = [

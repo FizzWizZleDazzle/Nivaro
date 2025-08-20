@@ -10,6 +10,9 @@ const nextConfig: NextConfig = {
   images: {
     unoptimized: true,
   },
+  // Skip build-time generation for dynamic routes with user-generated content
+  // These will be handled by client-side routing
+  skipTrailingSlashRedirect: true,
 };
 
 export default nextConfig;

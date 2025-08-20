@@ -17,11 +17,11 @@ pub async fn handle_clubs(req: Request, ctx: RouteContext<()>) -> Result<Respons
                 let segments: Vec<&str> = path.split('/').collect();
                 if let Some(club_id) = segments.get(segments.len() - 1) {
                     if !club_id.is_empty() && *club_id != "clubs" {
-                        return get_club(club_id, ctx).await;
+                        return get_club_authenticated(club_id, req, ctx).await;
                     }
                 }
             }
-            get_clubs(ctx).await
+            get_clubs_authenticated(req, ctx).await
         }
         Method::Post => {
             // Create new club - requires CSRF protection
@@ -29,6 +29,15 @@ pub async fn handle_clubs(req: Request, ctx: RouteContext<()>) -> Result<Respons
         }
         _ => Response::error("Method not allowed", 405),
     }
+}
+
+async fn get_clubs_authenticated(req: Request, ctx: RouteContext<()>) -> Result<Response> {
+    // Require authentication for viewing clubs
+    if get_user_id_from_token(&req, &ctx).is_none() {
+        return Response::error("Unauthorized", 401);
+    }
+    
+    get_clubs(ctx).await
 }
 
 async fn get_clubs(ctx: RouteContext<()>) -> Result<Response> {
@@ -66,6 +75,15 @@ async fn get_clubs(ctx: RouteContext<()>) -> Result<Response> {
     };
 
     Response::from_json(&response)
+}
+
+async fn get_club_authenticated(club_id: &str, req: Request, ctx: RouteContext<()>) -> Result<Response> {
+    // Require authentication for viewing club details
+    if get_user_id_from_token(&req, &ctx).is_none() {
+        return Response::error("Unauthorized", 401);
+    }
+    
+    get_club(club_id, ctx).await
 }
 
 async fn get_club(club_id: &str, ctx: RouteContext<()>) -> Result<Response> {

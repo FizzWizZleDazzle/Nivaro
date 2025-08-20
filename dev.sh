@@ -94,7 +94,7 @@ trap cleanup SIGINT SIGTERM
 # Start backend development server
 echo -e "${GREEN}Starting backend server...${NC}"
 cd backend
-wrangler dev --local &
+wrangler dev --local --port 8788 &
 BACKEND_PID=$!
 cd ..
 
@@ -110,7 +110,7 @@ cd ..
 
 echo -e "${GREEN}🎉 Development environment is ready!${NC}"
 echo -e "${BLUE}Frontend: http://localhost:3000${NC}"
-echo -e "${BLUE}Backend: http://localhost:8787${NC}"
+echo -e "${BLUE}Backend: http://localhost:8788${NC}"
 echo -e "${YELLOW}Press Ctrl+C to stop all servers${NC}"
 
 # Wait for background processes

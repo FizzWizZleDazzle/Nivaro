@@ -8,9 +8,54 @@ pub mod models;
 use handlers::*;
 use meetings::*;
 
+fn get_allowed_origin(origin: Option<&str>) -> String {
+    match origin {
+        Some("http://localhost:3000") => "http://localhost:3000".to_string(),
+        Some("http://localhost:3001") => "http://localhost:3001".to_string(),
+        Some("http://192.168.1.245:3000") => "http://192.168.1.245:3000".to_string(),
+        Some("http://192.168.1.245:3001") => "http://192.168.1.245:3001".to_string(),
+        Some(other) if other.starts_with("http://localhost:") || other.starts_with("http://192.168.") => {
+            other.to_string() // Allow any localhost or local network origin
+        },
+        _ => "http://localhost:3000".to_string(), // Default fallback
+    }
+}
+
+fn handle_cors_preflight_with_origin(origin: Option<&str>) -> Result<Response> {
+    let mut headers = worker::Headers::new();
+    let allowed_origin = get_allowed_origin(origin);
+    headers.set("Access-Control-Allow-Origin", &allowed_origin)?;
+    headers.set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")?;
+    headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-CSRF-Token")?;
+    headers.set("Access-Control-Allow-Credentials", "true")?;
+    headers.set("Access-Control-Max-Age", "86400")?;
+    
+    Ok(Response::empty()?
+        .with_status(200)
+        .with_headers(headers))
+}
+
+fn add_cors_headers_with_origin(mut response: Response, origin: Option<&str>) -> Result<Response> {
+    let headers = response.headers_mut();
+    let allowed_origin = get_allowed_origin(origin);
+    headers.set("Access-Control-Allow-Origin", &allowed_origin)?;
+    headers.set("Access-Control-Allow-Credentials", "true")?;
+    headers.set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")?;
+    headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-CSRF-Token")?;
+    Ok(response)
+}
+
 #[event(fetch)]
 async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
     console_error_panic_hook::set_once();
+
+    // Extract origin header before router consumes the request
+    let origin = req.headers().get("Origin").ok().flatten();
+    
+    // Handle preflight CORS requests
+    if req.method() == Method::Options {
+        return handle_cors_preflight_with_origin(origin.as_deref());
+    }
 
     let router = Router::new();
 
@@ -100,11 +145,21 @@ async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
             handle_projects(req, ctx).await
         })
         // Meeting endpoints
-        .get_async("/api/meetings", |_, _| async move {
+        .get_async("/api/meetings", |req, ctx| async move {
+            // Require authentication for viewing meetings
+            if crate::handlers::auth::get_user_id_from_token(&req, &ctx).is_none() {
+                return Response::error("Unauthorized", 401);
+            }
+            
             let meetings = get_meetings().await;
             Response::from_json(&meetings)
         })
-        .get_async("/api/meetings/:id", |_, ctx| async move {
+        .get_async("/api/meetings/:id", |req, ctx| async move {
+            // Require authentication for viewing meeting details
+            if crate::handlers::auth::get_user_id_from_token(&req, &ctx).is_none() {
+                return Response::error("Unauthorized", 401);
+            }
+            
             if let Some(id) = ctx.param("id") {
                 if let Some(meeting) = get_meeting(id).await {
                     return Response::from_json(&meeting);
@@ -183,7 +238,12 @@ async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
             Response::error("Meeting not found", 404)
         })
         // Forum endpoints
-        .get_async("/api/forum/questions", |_, _| async move {
+        .get_async("/api/forum/questions", |req, ctx| async move {
+            // Require authentication for viewing forum questions
+            if crate::handlers::auth::get_user_id_from_token(&req, &ctx).is_none() {
+                return Response::error("Unauthorized", 401);
+            }
+            
             forum::get_questions().await
         })
         .post_async("/api/forum/questions", |req, ctx| async move {
@@ -218,10 +278,17 @@ async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
                 Response::error("Invalid question ID", 400)
             }
         })
-        .get_async(
-            "/api/forum/tags",
-            |_, _| async move { forum::get_tags().await },
-        )
+        .get_async("/api/forum/tags", |req, ctx| async move {
+            // Require authentication for viewing forum tags
+            if crate::handlers::auth::get_user_id_from_token(&req, &ctx).is_none() {
+                return Response::error("Unauthorized", 401);
+            }
+            
+            forum::get_tags().await
+        })
         .run(req, env)
         .await
+        .and_then(|response| {
+            add_cors_headers_with_origin(response, origin.as_deref())
+        })
 }

@@ -32,7 +32,7 @@ describe('CSRF Protection', () => {
       
       expect(token).toBe(mockToken);
       expect(mockedFetch).toHaveBeenCalledWith(
-        'http://localhost:8787/api/csrf-token',
+        'http://localhost:8788/api/csrf-token',
         {
           method: 'GET',
           credentials: 'include',
@@ -102,7 +102,7 @@ describe('CSRF Protection', () => {
       
       // Check that the second call (actual API request) includes CSRF token
       const apiCall = mockedFetch.mock.calls[1];
-      expect(apiCall[0]).toBe('http://localhost:8787/api/auth/change-password');
+      expect(apiCall[0]).toBe('http://localhost:8788/api/auth/change-password');
       expect(apiCall[1]?.headers).toEqual(
         expect.objectContaining({
           'X-CSRF-Token': mockToken,
@@ -165,7 +165,7 @@ describe('CSRF Protection', () => {
       
       // Should have made a new token request
       expect(mockedFetch).toHaveBeenCalledWith(
-        'http://localhost:8787/api/csrf-token',
+        'http://localhost:8788/api/csrf-token',
         expect.objectContaining({ method: 'GET' })
       );
     });

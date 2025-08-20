@@ -9,7 +9,12 @@ import {
   Resource 
 } from '../types/learning';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8787';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 
+  (process.env.NEXT_PUBLIC_ENVIRONMENT === 'production'
+    ? 'https://nivaroapi.fizzwizzledazzle.com'
+    : process.env.NEXT_PUBLIC_ENVIRONMENT === 'staging'
+    ? 'https://nivaroapi.fizzwizzledazzle.dev'
+    : 'http://localhost:8788');
 
 // Mock data for demonstration
 const mockCourses: Course[] = [

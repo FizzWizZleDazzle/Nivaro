@@ -77,9 +77,11 @@ export interface SocialLoginRequest {
 }
 
 // Authentication API functions
-const API_BASE = process.env.NODE_ENV === 'production' 
-  ? 'https://your-backend-domain.com'
-  : 'http://localhost:8787';
+const API_BASE = process.env.NEXT_PUBLIC_ENVIRONMENT === 'production'
+  ? 'https://nivaroapi.fizzwizzledazzle.com'
+  : process.env.NEXT_PUBLIC_ENVIRONMENT === 'staging'
+  ? 'https://nivaroapi.fizzwizzledazzle.dev'
+  : 'http://localhost:8788';
 
 // CSRF Token Management
 let csrfToken: string | null = null;
