@@ -57,8 +57,8 @@ export default function MarketingLayout({
   const softwareApplicationStructuredData = generateStructuredData('SoftwareApplication', {});
 
   return (
-    <html lang="en">
-      <head>
+    <div>
+      <div>
         {/* Structured Data for SEO */}
         <script
           type="application/ld+json"
@@ -88,8 +88,8 @@ export default function MarketingLayout({
         
         {/* Analytics and Performance Monitoring */}
         <Analytics />
-      </head>
-      <body className="font-sans antialiased min-h-screen flex flex-col">
+      </div>
+      <div className="font-sans antialiased min-h-screen flex flex-col">
         <ErrorBoundary>
           <ClientWrapper>
             <Navigation />
@@ -100,7 +100,7 @@ export default function MarketingLayout({
           </ClientWrapper>
           <CookieConsent />
         </ErrorBoundary>
-      </body>
-    </html>
+      </div>
+    </div>
   );
 }
