@@ -2,6 +2,9 @@ name = "backend"
 main = "build/worker/shim.mjs"
 compatibility_date = "2025-07-17"
 
+[vars]
+JWT_SECRET = "your-super-secret-jwt-key-change-this-in-production"
+
 [build]
 command = "cargo install -q worker-build && worker-build --release"
 

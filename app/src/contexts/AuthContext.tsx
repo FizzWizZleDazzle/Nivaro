@@ -99,17 +99,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // Initialize authentication state
   useEffect(() => {
     const initAuth = async () => {
-      if (isAuthenticated()) {
-        try {
-          dispatch({ type: 'AUTH_START' });
-          const user = await AuthAPI.getCurrentUser();
-          dispatch({ type: 'AUTH_SUCCESS', payload: user });
-        } catch (error) {
-          console.error('Failed to get current user:', error);
-          clearAuth();
-          dispatch({ type: 'AUTH_FAILURE', payload: 'Session expired' });
-        }
-      } else {
+      // Try to get current user to check if we have a valid session
+      try {
+        dispatch({ type: 'AUTH_START' });
+        const user = await AuthAPI.getCurrentUser();
+        dispatch({ type: 'AUTH_SUCCESS', payload: user });
+      } catch (error) {
+        // If we can't get the current user, we're not authenticated
+        console.log('Not authenticated on init:', error);
         dispatch({ type: 'AUTH_LOGOUT' });
       }
     };
@@ -122,6 +119,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
       dispatch({ type: 'AUTH_START' });
       const response = await AuthAPI.login({ email, password });
       
+      console.log('Login response:', response);
+      
       if (response.success && response.user) {
         dispatch({ type: 'AUTH_SUCCESS', payload: response.user });
       } else {
@@ -130,6 +129,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       
       return response;
     } catch (error) {
+      console.error('Login error caught:', error);
       const message = error instanceof Error ? error.message : 'Login failed';
       dispatch({ type: 'AUTH_FAILURE', payload: message });
       return { success: false, error: message };

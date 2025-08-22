@@ -60,8 +60,11 @@ export default function LoginPage() {
 
     try {
       const response = await login(formData.email, formData.password);
+      console.log('Login page received response:', response);
       if (response.success) {
-        router.push('/'); // Redirect to home page
+        console.log('Login successful, redirecting to home...');
+        // Use window.location for static export
+        window.location.href = '/';
       }
     } catch (error) {
       console.error('Login error:', error);
@@ -99,7 +102,7 @@ export default function LoginPage() {
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           {error && (
             <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
-              {error}
+              {typeof error === 'string' ? error : JSON.stringify(error)}
             </div>
           )}
           

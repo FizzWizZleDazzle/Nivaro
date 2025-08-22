@@ -76,6 +76,26 @@ cd ..
 echo -e "${BLUE}Building backend...${NC}"
 cd backend
 cargo build
+
+# Initialize database if empty
+echo -e "${BLUE}Checking database...${NC}"
+TABLE_COUNT=$(wrangler d1 execute DB --local --command "SELECT COUNT(*) as count FROM sqlite_master WHERE type='table';" 2>/dev/null | grep -o '"count":[0-9]*' | grep -o '[0-9]*' || echo "0")
+if [ "$TABLE_COUNT" -eq "0" ] || [ -z "$TABLE_COUNT" ]; then
+    echo -e "${YELLOW}Initializing database schema...${NC}"
+    wrangler d1 execute DB --local --file=schema.sql
+    echo -e "${GREEN}✅ Database initialized${NC}"
+else
+    echo -e "${GREEN}✅ Database already initialized${NC}"
+fi
+cd ..
+
+# Build frontend statically
+echo -e "${BLUE}Building frontend statically...${NC}"
+cd app
+# Clean previous build to ensure fresh build with env vars
+rm -rf .next out
+npm run build
+echo -e "${GREEN}✅ Frontend built successfully${NC}"
 cd ..
 
 # Start development servers
@@ -98,19 +118,68 @@ wrangler dev --local --port 8788 &
 BACKEND_PID=$!
 cd ..
 
-# Wait a moment for backend to start
-sleep 2
+# Wait for backend to start
+echo -e "${YELLOW}Waiting for backend to start...${NC}"
+for i in {1..30}; do
+    if curl -s http://localhost:8788/ > /dev/null 2>&1; then
+        echo -e "${GREEN}✅ Backend is ready${NC}"
+        break
+    fi
+    sleep 1
+done
 
-# Start frontend development server
-echo -e "${GREEN}Starting frontend server...${NC}"
-cd app
-npm run dev &
-FRONTEND_PID=$!
-cd ..
+# Create demo user using the signup API
+DEMO_EXISTS=$(wrangler d1 execute DB --local --command "SELECT COUNT(*) as count FROM users WHERE email='demo@nivaro.com';" 2>/dev/null | grep -o '"count":1' || echo "")
+if [ -z "$DEMO_EXISTS" ]; then
+    echo -e "${YELLOW}Creating demo user account...${NC}"
+    
+    # Use the signup API endpoint to create the demo user with a stronger password
+    SIGNUP_RESPONSE=$(curl -s -X POST http://localhost:8788/api/auth/signup \
+        -H "Content-Type: application/json" \
+        -H "Origin: http://localhost:3000" \
+        -d '{"email":"demo@nivaro.com","password":"DemoPass123@","name":"Demo User"}' 2>/dev/null)
+    
+    if echo "$SIGNUP_RESPONSE" | grep -q '"success":true'; then
+        echo -e "${GREEN}✅ Demo user created successfully${NC}"
+        echo -e "${BLUE}   📧 Email: demo@nivaro.com${NC}"
+        echo -e "${BLUE}   🔑 Password: DemoPass123@${NC}"
+    else
+        echo -e "${YELLOW}⚠️  Demo user might already exist or creation failed${NC}"
+    fi
+fi
+
+# Start static file server for frontend
+echo -e "${GREEN}Starting frontend static server...${NC}"
+cd app/out
+
+# Check if Python 3 is available and use it, otherwise use Node's http-server
+if command_exists python3; then
+    echo -e "${BLUE}Using Python HTTP server...${NC}"
+    python3 -m http.server 3000 &
+    FRONTEND_PID=$!
+elif command_exists python; then
+    echo -e "${BLUE}Using Python HTTP server...${NC}"
+    python -m http.server 3000 &
+    FRONTEND_PID=$!
+elif command_exists npx; then
+    echo -e "${BLUE}Using Node http-server...${NC}"
+    npx http-server -p 3000 --cors &
+    FRONTEND_PID=$!
+else
+    echo -e "${RED}❌ No suitable HTTP server found. Please install Python 3 or Node.js${NC}"
+    exit 1
+fi
+
+cd ../..
 
 echo -e "${GREEN}🎉 Development environment is ready!${NC}"
-echo -e "${BLUE}Frontend: http://localhost:3000${NC}"
+echo -e "${BLUE}Frontend (static): http://localhost:3000${NC}"
 echo -e "${BLUE}Backend: http://localhost:8788${NC}"
+echo -e ""
+echo -e "${GREEN}Demo Account Credentials:${NC}"
+echo -e "${BLUE}   📧 Email: demo@nivaro.com${NC}"
+echo -e "${BLUE}   🔑 Password: DemoPass123@${NC}"
+echo -e ""
 echo -e "${YELLOW}Press Ctrl+C to stop all servers${NC}"
 
 # Wait for background processes

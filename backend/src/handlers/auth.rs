@@ -136,7 +136,16 @@ async fn login(mut req: Request, ctx: RouteContext<()>) -> Result<Response> {
     let user_result = get_user_by_email(&db, &login_request.email).await;
     let auth_user = match user_result {
         Some(user) => user,
-        None => return Response::error("Invalid credentials", 401),
+        None => {
+            let error_response = AuthResponse {
+                success: false,
+                user: None,
+                token: None,
+                expires_at: None,
+                error: Some("Invalid credentials".to_string()),
+            };
+            return Ok(Response::from_json(&error_response)?.with_status(401));
+        }
     };
 
     // Check if account is locked
@@ -157,7 +166,14 @@ async fn login(mut req: Request, ctx: RouteContext<()>) -> Result<Response> {
     if !password_valid {
         // Increment failed login attempts
         increment_failed_login_attempts(&db, &auth_user.id).await;
-        return Response::error("Invalid credentials", 401);
+        let error_response = AuthResponse {
+            success: false,
+            user: None,
+            token: None,
+            expires_at: None,
+            error: Some("Invalid credentials".to_string()),
+        };
+        return Ok(Response::from_json(&error_response)?.with_status(401));
     }
 
     // Reset failed login attempts and update last login

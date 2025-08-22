@@ -153,7 +153,17 @@ export class AuthAPI {
 
     try {
       const response = await fetch(url, mergedOptions);
-      const data = await response.json();
+      
+      // Try to parse as JSON, but handle text responses too
+      let data;
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        data = await response.json();
+      } else {
+        const text = await response.text();
+        // If we get plain text, wrap it in an error response
+        data = { error: text };
+      }
       
       if (!response.ok) {
         // Clear CSRF token if we get a 403 (might be expired)
@@ -222,8 +232,11 @@ export class AuthAPI {
   }
 
   static async getCurrentUser(): Promise<User> {
-    const response = await this.request('/api/auth/me') as { data: User };
-    return response.data;
+    const response = await this.request('/api/auth/me') as AuthResponse;
+    if (response.user) {
+      return response.user;
+    }
+    throw new Error('User not found');
   }
 
   static async updateProfile(request: UpdateProfileRequest): Promise<User> {
