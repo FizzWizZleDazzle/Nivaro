@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# Nivaro Development Script for Linux/macOS
-# This script sets up and runs the development environment
+# Nivaro Development Script for React Apps
+# This script sets up and runs the development environment for both React apps
 
 set -e
 
-echo "🚀 Starting Nivaro Development Environment..."
+echo "🚀 Starting Nivaro Development Environment (React + Vite)..."
 
 # Colors for output
 RED='\033[0;31m'
@@ -62,15 +62,49 @@ if ! command_exists wrangler; then
 fi
 echo -e "${GREEN}✅ Wrangler CLI is available${NC}"
 
-# Install frontend dependencies
-echo -e "${BLUE}Installing frontend dependencies...${NC}"
-cd app
+# Install landing app dependencies
+echo -e "${BLUE}Installing landing app dependencies...${NC}"
+cd app/landing-app
 if [ ! -d "node_modules" ] || [ "package.json" -nt "node_modules" ]; then
     npm install
 else
-    echo -e "${GREEN}✅ Frontend dependencies are up to date${NC}"
+    echo -e "${GREEN}✅ Landing app dependencies are up to date${NC}"
 fi
-cd ..
+
+# Create .env for landing app if it doesn't exist
+if [ ! -f ".env" ]; then
+    echo -e "${YELLOW}Creating landing app .env file...${NC}"
+    cat > .env << EOF
+# Landing App Configuration
+VITE_APP_URL=http://localhost:3001
+EOF
+    echo -e "${GREEN}✅ Landing app .env created${NC}"
+fi
+
+cd ../..
+
+# Install main app dependencies
+echo -e "${BLUE}Installing main app dependencies...${NC}"
+cd app/main-app
+if [ ! -d "node_modules" ] || [ "package.json" -nt "node_modules" ]; then
+    npm install
+else
+    echo -e "${GREEN}✅ Main app dependencies are up to date${NC}"
+fi
+
+# Create .env for main app if it doesn't exist
+if [ ! -f ".env" ]; then
+    echo -e "${YELLOW}Creating main app .env file...${NC}"
+    cat > .env << EOF
+# Main App Configuration
+VITE_API_URL=http://localhost:8788
+VITE_APP_NAME=Nivaro
+VITE_LANDING_URL=http://localhost:3000
+EOF
+    echo -e "${GREEN}✅ Main app .env created${NC}"
+fi
+
+cd ../..
 
 # Build backend
 echo -e "${BLUE}Building backend...${NC}"
@@ -87,15 +121,6 @@ if [ "$TABLE_COUNT" -eq "0" ] || [ -z "$TABLE_COUNT" ]; then
 else
     echo -e "${GREEN}✅ Database already initialized${NC}"
 fi
-cd ..
-
-# Build frontend statically
-echo -e "${BLUE}Building frontend statically...${NC}"
-cd app
-# Clean previous build to ensure fresh build with env vars
-rm -rf .next out
-npm run build
-echo -e "${GREEN}✅ Frontend built successfully${NC}"
 cd ..
 
 # Start development servers
@@ -148,37 +173,51 @@ if [ -z "$DEMO_EXISTS" ]; then
     fi
 fi
 
-# Start static file server for frontend
-echo -e "${GREEN}Starting frontend static server...${NC}"
-cd app/out
-
-# Check if Python 3 is available and use it, otherwise use Node's http-server
-if command_exists python3; then
-    echo -e "${BLUE}Using Python HTTP server...${NC}"
-    python3 -m http.server 3000 &
-    FRONTEND_PID=$!
-elif command_exists python; then
-    echo -e "${BLUE}Using Python HTTP server...${NC}"
-    python -m http.server 3000 &
-    FRONTEND_PID=$!
-elif command_exists npx; then
-    echo -e "${BLUE}Using Node http-server...${NC}"
-    npx http-server -p 3000 --cors &
-    FRONTEND_PID=$!
-else
-    echo -e "${RED}❌ No suitable HTTP server found. Please install Python 3 or Node.js${NC}"
-    exit 1
-fi
-
+# Start landing app development server
+echo -e "${GREEN}Starting landing app (port 3000)...${NC}"
+cd app/landing-app
+npm run dev &
+LANDING_PID=$!
 cd ../..
 
+# Start main app development server
+echo -e "${GREEN}Starting main app (port 3001)...${NC}"
+cd app/main-app
+npm run dev &
+MAIN_PID=$!
+cd ../..
+
+# Wait for landing app to start
+echo -e "${YELLOW}Waiting for landing app to start...${NC}"
+for i in {1..30}; do
+    if curl -s http://localhost:3000/ > /dev/null 2>&1; then
+        echo -e "${GREEN}✅ Landing app is ready${NC}"
+        break
+    fi
+    sleep 1
+done
+
+# Wait for main app to start
+echo -e "${YELLOW}Waiting for main app to start...${NC}"
+for i in {1..30}; do
+    if curl -s http://localhost:3001/ > /dev/null 2>&1; then
+        echo -e "${GREEN}✅ Main app is ready${NC}"
+        break
+    fi
+    sleep 1
+done
+
 echo -e "${GREEN}🎉 Development environment is ready!${NC}"
-echo -e "${BLUE}Frontend (static): http://localhost:3000${NC}"
-echo -e "${BLUE}Backend: http://localhost:8788${NC}"
+echo -e ""
+echo -e "${BLUE}🌐 Landing Page: http://localhost:3000${NC}"
+echo -e "${BLUE}📱 Main App: http://localhost:3001${NC}"
+echo -e "${BLUE}🔧 Backend API: http://localhost:8788${NC}"
 echo -e ""
 echo -e "${GREEN}Demo Account Credentials:${NC}"
 echo -e "${BLUE}   📧 Email: demo@nivaro.com${NC}"
 echo -e "${BLUE}   🔑 Password: DemoPass123@${NC}"
+echo -e ""
+echo -e "${YELLOW}Architecture: React + Vite (Static Build Ready)${NC}"
 echo -e ""
 echo -e "${YELLOW}Press Ctrl+C to stop all servers${NC}"
 

@@ -224,12 +224,24 @@ async fn login(mut req: Request, ctx: RouteContext<()>) -> Result<Response> {
 
     let mut response = Response::from_json(&response)?;
     
-    // Set secure httpOnly cookie
+    // Set secure httpOnly cookie with domain for subdomain access
+    // In production, this should use the actual domain
+    let (cookie_domain, secure_flag) = match ctx.env.var("ENVIRONMENT") {
+        Ok(env) => {
+            if env.to_string() == "production" {
+                ("; Domain=.nivaro.com", "; Secure")  // Production: domain restriction and secure
+            } else {
+                ("", "")  // Development: no domain restriction, no secure flag for localhost
+            }
+        },
+        Err(_) => ("", "")  // Default to development settings
+    };
+    
     response = response.with_headers(
         Headers::from_iter(vec![
             ("Set-Cookie".to_string(), format!(
-                "auth_token={}; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=86400",
-                token
+                "auth_token={}; HttpOnly{}; SameSite=Lax; Path=/; Max-Age=86400{}",
+                token, secure_flag, cookie_domain
             ))
         ])
     );
@@ -245,11 +257,26 @@ async fn logout(req: Request, ctx: RouteContext<()>) -> Result<Response> {
         let _ = stmt.bind(&vec![token.into()])?.run().await;
     }
 
+    // Clear cookie with proper domain
+    let (cookie_domain, secure_flag) = match ctx.env.var("ENVIRONMENT") {
+        Ok(env) => {
+            if env.to_string() == "production" {
+                ("; Domain=.nivaro.com", "; Secure")
+            } else {
+                ("", "")
+            }
+        },
+        Err(_) => ("", "")
+    };
+    
     let response = ApiResponse::success("Logged out successfully");
     Ok(Response::from_json(&response)?
         .with_headers(
             Headers::from_iter(vec![
-                ("Set-Cookie".to_string(), "auth_token=; HttpOnly; Secure; SameSite=Strict; Max-Age=0".to_string())
+                ("Set-Cookie".to_string(), format!(
+                    "auth_token=; HttpOnly{}; SameSite=Lax; Path=/; Max-Age=0{}",
+                    secure_flag, cookie_domain
+                ))
             ])
         ))
 }
