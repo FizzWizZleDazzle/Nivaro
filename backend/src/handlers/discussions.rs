@@ -4,6 +4,7 @@ use crate::handlers::auth::{get_user_id_from_token, verify_csrf_token};
 use chrono::Utc;
 use uuid::Uuid;
 use serde_json::json;
+use worker::wasm_bindgen::JsValue;
 
 #[derive(Serialize, Deserialize)]
 struct CreateDiscussionRequest {
@@ -33,7 +34,7 @@ pub async fn handle_discussions(req: Request, ctx: RouteContext<()>) -> Result<R
         if let Some(club_id_pos) = segments.iter().position(|&x| x == "clubs") {
             if let Some(club_id) = segments.get(club_id_pos + 1) {
                 match method {
-                    Method::Get => return get_club_discussions(req, ctx, club_id.to_string()).await,
+                    Method::Get => return get_club_discussions(req, ctx).await,
                     Method::Post => return create_discussion(req, ctx, club_id.to_string()).await,
                     _ => return Response::error("Method not allowed", 405)
                 }
@@ -100,7 +101,8 @@ async fn get_club_discussions(req: Request, ctx: RouteContext<()>) -> Result<Res
         WHERE d.club_id = ?1 AND d.parent_id IS NULL
     ".to_string();
     
-    let mut bind_params: Vec<JsValue> = vec![ctx.param("club_id").unwrap_or("").into()];
+    let club_id = ctx.param("club_id").map(|s| s.to_string()).unwrap_or_else(|| String::new());
+    let mut bind_params: Vec<JsValue> = vec![club_id.into()];
     
     if let Some(tag_filter) = tag {
         query.push_str(" AND EXISTS (SELECT 1 FROM json_each(d.tags) WHERE value = ?2)");
@@ -176,7 +178,7 @@ async fn create_discussion(mut req: Request, ctx: RouteContext<()>, club_id: Str
     let stmt = stmt.bind(&vec![
         discussion_id.clone().into(),
         club_id.into(),
-        user_id.into(),
+        user_id.clone().into(),
         body.title.into(),
         body.content.into(),
         serde_json::to_string(&body.tags).unwrap().into(),
@@ -498,7 +500,7 @@ async fn delete_discussion(req: Request, ctx: RouteContext<()>, discussion_id: S
         JOIN members m ON m.user_id = ?1 AND m.club_id = d.club_id
         WHERE d.id = ?2
     ");
-    let check_stmt = check_stmt.bind(&vec![user_id.into(), discussion_id.clone().into()])?;
+    let check_stmt = check_stmt.bind(&vec![user_id.clone().into(), discussion_id.clone().into()])?;
     
     let discussion_info = match check_stmt.first::<serde_json::Value>(None).await? {
         Some(info) => info,

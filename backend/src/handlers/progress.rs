@@ -3,7 +3,7 @@ use serde_json::json;
 use crate::handlers::auth::get_user_id_from_token;
 
 pub async fn handle_progress(req: Request, ctx: RouteContext<()>) -> Result<Response> {
-    let method = req.method();
+    let _method = req.method();
     let url = req.url()?;
     let path = url.path();
     

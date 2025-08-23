@@ -20,20 +20,20 @@ pub async fn handle_auth(req: Request, ctx: RouteContext<()>) -> Result<Response
     let path = url.path();
     
     match (method, path) {
-        (Method::Post, "/api/auth/signup") => signup(req, ctx).await,
-        (Method::Post, "/api/auth/login") => login(req, ctx).await,
-        (Method::Post, "/api/auth/logout") => logout(req, ctx).await,
-        (Method::Post, "/api/auth/forgot-password") => forgot_password(req, ctx).await,
-        (Method::Post, "/api/auth/reset-password") => reset_password(req, ctx).await,
-        (Method::Post, "/api/auth/change-password") => change_password(req, ctx).await,
-        (Method::Post, "/api/auth/verify-email") => verify_email(req, ctx).await,
-        (Method::Get, "/api/auth/me") => get_current_user(req, ctx).await,
-        (Method::Get, "/api/auth/csrf") => get_csrf_token(req, ctx).await,
-        (Method::Put, "/api/auth/profile") => update_profile(req, ctx).await,
-        (Method::Delete, "/api/auth/account") => delete_account(req, ctx).await,
-        (Method::Post, "/api/auth/social") => social_login(req, ctx).await,
-        (Method::Get, "/api/auth/sessions") => get_user_sessions(req, ctx).await,
-        (Method::Delete, "/api/auth/sessions") => revoke_all_sessions(req, ctx).await,
+        (Method::Post, "/auth/signup") => signup(req, ctx).await,
+        (Method::Post, "/auth/login") => login(req, ctx).await,
+        (Method::Post, "/auth/logout") => logout(req, ctx).await,
+        (Method::Post, "/auth/forgot-password") => forgot_password(req, ctx).await,
+        (Method::Post, "/auth/reset-password") => reset_password(req, ctx).await,
+        (Method::Post, "/auth/change-password") => change_password(req, ctx).await,
+        (Method::Post, "/auth/verify-email") => verify_email(req, ctx).await,
+        (Method::Get, "/auth/me") => get_current_user(req, ctx).await,
+        (Method::Get, "/auth/csrf") => get_csrf_token(req, ctx).await,
+        (Method::Put, "/auth/profile") => update_profile(req, ctx).await,
+        (Method::Delete, "/auth/account") => delete_account(req, ctx).await,
+        (Method::Post, "/auth/social") => social_login(req, ctx).await,
+        (Method::Get, "/auth/sessions") => get_user_sessions(req, ctx).await,
+        (Method::Delete, "/auth/sessions") => revoke_all_sessions(req, ctx).await,
         _ => Response::error("Not found", 404)
     }
 }

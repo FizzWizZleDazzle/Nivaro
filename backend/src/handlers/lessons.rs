@@ -1,9 +1,9 @@
 use worker::*;
-use crate::models::*;
 use crate::handlers::auth::{get_user_id_from_token, verify_csrf_token};
 use chrono::Utc;
 use uuid::Uuid;
 use serde_json::json;
+use worker::wasm_bindgen::JsValue;
 
 // Handle module endpoints
 pub async fn handle_modules(req: Request, ctx: RouteContext<()>) -> Result<Response> {
@@ -286,13 +286,14 @@ async fn reorder_modules(mut req: Request, ctx: RouteContext<()>, _module_id: St
     }
     
     // Get user ID from token
-    let user_id = match get_user_id_from_token(&req, &ctx) {
+    let _user_id = match get_user_id_from_token(&req, &ctx) {
         Some(id) => id,
         None => return Response::error("Unauthorized", 401),
     };
     
     let body: serde_json::Value = req.json().await?;
-    let module_orders = body["modules"].as_array().unwrap_or(&vec![]);
+    let empty_vec = vec![];
+    let module_orders = body["modules"].as_array().unwrap_or(&empty_vec);
     
     let db = ctx.env.d1("DB")?;
     
@@ -511,7 +512,7 @@ async fn delete_lesson(req: Request, ctx: RouteContext<()>, lesson_id: String) -
     }))
 }
 
-async fn reorder_lessons(mut req: Request, ctx: RouteContext<()>, _lesson_id: String) -> Result<Response> {
+async fn reorder_lessons(_req: Request, _ctx: RouteContext<()>, _lesson_id: String) -> Result<Response> {
     // Similar to reorder_modules
     Response::from_json(&json!({
         "success": true,
@@ -539,7 +540,7 @@ async fn mark_lesson_complete(req: Request, ctx: RouteContext<()>, lesson_id: St
     let check_stmt = db.prepare("SELECT id FROM user_progress WHERE user_id = ?1 AND lesson_id = ?2");
     let check_stmt = check_stmt.bind(&vec![user_id.clone().into(), lesson_id.clone().into()])?;
     
-    if let Some(existing) = check_stmt.first::<serde_json::Value>(None).await? {
+    if let Some(_existing) = check_stmt.first::<serde_json::Value>(None).await? {
         // Update existing progress
         let update_stmt = db.prepare("
             UPDATE user_progress 

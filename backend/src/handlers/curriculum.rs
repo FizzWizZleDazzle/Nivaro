@@ -1,9 +1,9 @@
 use worker::*;
-use crate::models::*;
 use crate::handlers::auth::{get_user_id_from_token, verify_csrf_token};
 use chrono::Utc;
 use uuid::Uuid;
 use serde_json::json;
+use worker::wasm_bindgen::JsValue;
 
 pub async fn handle_curriculum(req: Request, ctx: RouteContext<()>) -> Result<Response> {
     let method = req.method();

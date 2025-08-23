@@ -61,62 +61,34 @@ if %errorlevel% neq 0 (
 )
 echo [OK] Wrangler CLI is available
 
-REM Check if landing directory exists
+REM Install landing app dependencies (static React with Vite)
 if exist "landing" (
     echo.
-    echo Installing landing app dependencies...
+    echo Installing React app dependencies...
     cd landing
     
     REM Check if node_modules exists
     if not exist "node_modules" (
         call npm install
     ) else (
-        echo [OK] Landing app dependencies are up to date
+        echo [OK] React app dependencies are up to date
     )
     
     REM Create .env for landing app if it doesn't exist
     if not exist ".env" (
-        echo Creating landing app .env file...
+        echo Creating React app .env file...
         (
-            echo # Landing App Configuration
-            echo VITE_APP_URL=http://localhost:3001
+            echo # React App Configuration
+            echo VITE_API_URL=http://localhost:8787
+            echo VITE_APP_NAME=Cursoset
         ) > .env
-        echo [OK] Landing app .env created
+        echo [OK] React app .env created
     )
     
     cd ..
-)
-
-REM Check if main app directory exists
-if not exist "app" (
-    echo.
-    echo [WARNING] Main app directory not found. The frontend was removed in the latest update.
-    echo           The backend API is fully implemented and ready to use.
 ) else (
     echo.
-    echo Installing main app dependencies...
-    cd app
-    
-    REM Check if node_modules exists
-    if not exist "node_modules" (
-        call npm install
-    ) else (
-        echo [OK] Main app dependencies are up to date
-    )
-    
-    REM Create .env.local for main app if it doesn't exist
-    if not exist ".env.local" (
-        echo Creating main app .env.local file...
-        (
-            echo # Main App Configuration
-            echo NEXT_PUBLIC_API_URL=http://localhost:8787
-            echo NEXT_PUBLIC_APP_NAME=Cursoset
-            echo NEXT_PUBLIC_LANDING_URL=http://localhost:3000
-        ) > .env.local
-        echo [OK] Main app .env.local created
-    )
-    
-    cd ..
+    echo [WARNING] Landing directory not found.
 )
 
 REM Build backend
@@ -162,20 +134,14 @@ if %errorlevel% equ 0 (
 
 cd ..
 
-REM Start landing app if it exists
+REM Start React app if it exists
 if exist "landing" (
-    echo Starting landing app on port 3000...
+    echo Starting React app on port 3000...
     cd landing
-    start "Cursoset Landing" cmd /k "npm run dev"
+    start "Cursoset React App" cmd /k "npm run dev"
     cd ..
-)
-
-REM Start main app if it exists
-if exist "app" (
-    echo Starting main app on port 3001...
-    cd app
-    start "Cursoset Main App" cmd /k "npm run dev"
-    cd ..
+) else (
+    echo [WARNING] No frontend found. Only backend API will be available.
 )
 
 REM Wait for services to fully start
@@ -188,10 +154,7 @@ echo   Cursoset Development Ready!
 echo =====================================
 echo.
 if exist "landing" (
-    echo Landing Page: http://localhost:3000
-)
-if exist "app" (
-    echo Main App:     http://localhost:3001
+    echo React App:    http://localhost:3000
 )
 echo Backend API:  http://localhost:8787
 echo.
@@ -205,11 +168,8 @@ echo   Email:    demo@nivaro.com
 echo   Password: DemoPass123@
 echo.
 echo Stack: Rust/Cloudflare Workers Backend
-if exist "app" (
-    echo        + Next.js Frontend
-)
 if exist "landing" (
-    echo        + Landing Page
+    echo        + Static React ^(Vite^) Frontend
 )
 echo.
 echo =====================================
@@ -221,8 +181,7 @@ REM Kill all processes
 echo.
 echo Shutting down development servers...
 taskkill /F /FI "WINDOWTITLE eq Cursoset Backend*" >nul 2>&1
-taskkill /F /FI "WINDOWTITLE eq Cursoset Landing*" >nul 2>&1
-taskkill /F /FI "WINDOWTITLE eq Cursoset Main App*" >nul 2>&1
+taskkill /F /FI "WINDOWTITLE eq Cursoset React App*" >nul 2>&1
 
 echo Done!
 exit /b 0

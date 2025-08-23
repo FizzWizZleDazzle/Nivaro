@@ -22,7 +22,7 @@ fn get_allowed_origin(origin: Option<&str>) -> String {
 }
 
 fn handle_cors_preflight_with_origin(origin: Option<&str>) -> Result<Response> {
-    let mut headers = worker::Headers::new();
+    let headers = worker::Headers::new();
     let allowed_origin = get_allowed_origin(origin);
     headers.set("Access-Control-Allow-Origin", &allowed_origin)?;
     headers.set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")?;
@@ -64,177 +64,177 @@ async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
             Response::ok("Nivaro API - Club Management Platform")
         })
         // CSRF token endpoint
-        .get_async("/api/csrf-token", |req, ctx| async move {
+        .get_async("/csrf-token", |req, ctx| async move {
             get_csrf_token(req, ctx).await
         })
         // Auth endpoints
-        .post_async("/api/auth/signup", |req, ctx| async move {
+        .post_async("/auth/signup", |req, ctx| async move {
             handle_auth(req, ctx).await
         })
-        .post_async("/api/auth/login", |req, ctx| async move {
+        .post_async("/auth/login", |req, ctx| async move {
             handle_auth(req, ctx).await
         })
-        .post_async("/api/auth/logout", |req, ctx| async move {
+        .post_async("/auth/logout", |req, ctx| async move {
             handle_auth(req, ctx).await
         })
-        .post_async("/api/auth/forgot-password", |req, ctx| async move {
+        .post_async("/auth/forgot-password", |req, ctx| async move {
             handle_auth(req, ctx).await
         })
-        .post_async("/api/auth/reset-password", |req, ctx| async move {
+        .post_async("/auth/reset-password", |req, ctx| async move {
             handle_auth(req, ctx).await
         })
-        .post_async("/api/auth/change-password", |req, ctx| async move {
+        .post_async("/auth/change-password", |req, ctx| async move {
             handle_auth(req, ctx).await
         })
-        .post_async("/api/auth/verify-email", |req, ctx| async move {
+        .post_async("/auth/verify-email", |req, ctx| async move {
             handle_auth(req, ctx).await
         })
-        .get_async("/api/auth/me", |req, ctx| async move {
+        .get_async("/auth/me", |req, ctx| async move {
             handle_auth(req, ctx).await
         })
-        .put_async("/api/auth/profile", |req, ctx| async move {
+        .put_async("/auth/profile", |req, ctx| async move {
             handle_auth(req, ctx).await
         })
-        .delete_async("/api/auth/account", |req, ctx| async move {
+        .delete_async("/auth/account", |req, ctx| async move {
             handle_auth(req, ctx).await
         })
-        .post_async("/api/auth/social", |req, ctx| async move {
+        .post_async("/auth/social", |req, ctx| async move {
             handle_auth(req, ctx).await
         })
-        .get_async("/api/auth/sessions", |req, ctx| async move {
+        .get_async("/auth/sessions", |req, ctx| async move {
             handle_auth(req, ctx).await
         })
-        .delete_async("/api/auth/sessions", |req, ctx| async move {
+        .delete_async("/auth/sessions", |req, ctx| async move {
             handle_auth(req, ctx).await
         })
         // Club endpoints
-        .get_async("/api/clubs", |req, ctx| async move {
+        .get_async("/clubs", |req, ctx| async move {
             handle_clubs(req, ctx).await
         })
-        .get_async("/api/clubs/:id", |req, ctx| async move {
+        .get_async("/clubs/:id", |req, ctx| async move {
             handle_clubs(req, ctx).await
         })
-        .post_async("/api/clubs", |req, ctx| async move {
+        .post_async("/clubs", |req, ctx| async move {
             handle_clubs(req, ctx).await
         })
-        .get_async("/api/clubs/:club_id/members", |req, ctx| async move {
+        .get_async("/clubs/:club_id/members", |req, ctx| async move {
             handle_members(req, ctx).await
         })
-        .post_async("/api/members/join", |req, ctx| async move {
+        .post_async("/members/join", |req, ctx| async move {
             handle_members(req, ctx).await
         })
         // Event endpoints
-        .get_async("/api/clubs/:club_id/events", |req, ctx| async move {
+        .get_async("/clubs/:club_id/events", |req, ctx| async move {
             handle_events(req, ctx).await
         })
-        .post_async("/api/events", |req, ctx| async move {
+        .post_async("/events", |req, ctx| async move {
             handle_events(req, ctx).await
         })
         // Announcement endpoints
-        .get_async("/api/clubs/:club_id/announcements", |req, ctx| async move {
+        .get_async("/clubs/:club_id/announcements", |req, ctx| async move {
             handle_announcements(req, ctx).await
         })
-        .post_async("/api/announcements", |req, ctx| async move {
+        .post_async("/announcements", |req, ctx| async move {
             handle_announcements(req, ctx).await
         })
         // Project endpoints
-        .get_async("/api/clubs/:club_id/projects", |req, ctx| async move {
+        .get_async("/clubs/:club_id/projects", |req, ctx| async move {
             handle_projects(req, ctx).await
         })
-        .post_async("/api/projects", |req, ctx| async move {
+        .post_async("/projects", |req, ctx| async move {
             handle_projects(req, ctx).await
         })
         // Curriculum endpoints
-        .get_async("/api/clubs/:club_id/curriculum", |req, ctx| async move {
+        .get_async("/clubs/:club_id/curriculum", |req, ctx| async move {
             handle_curriculum(req, ctx).await
         })
-        .post_async("/api/clubs/:club_id/curriculum", |req, ctx| async move {
+        .post_async("/clubs/:club_id/curriculum", |req, ctx| async move {
             handle_curriculum(req, ctx).await
         })
-        .put_async("/api/clubs/:club_id/curriculum/:curriculum_id", |req, ctx| async move {
+        .put_async("/clubs/:club_id/curriculum/:curriculum_id", |req, ctx| async move {
             handle_curriculum(req, ctx).await
         })
-        .delete_async("/api/curriculum/:id", |req, ctx| async move {
+        .delete_async("/curriculum/:id", |req, ctx| async move {
             handle_curriculum(req, ctx).await
         })
-        .post_async("/api/curriculum/:id/publish", |req, ctx| async move {
+        .post_async("/curriculum/:id/publish", |req, ctx| async move {
             handle_curriculum(req, ctx).await
         })
         // Module endpoints
-        .get_async("/api/curriculum/:id/modules", |req, ctx| async move {
+        .get_async("/curriculum/:id/modules", |req, ctx| async move {
             handle_modules(req, ctx).await
         })
-        .post_async("/api/curriculum/:id/modules", |req, ctx| async move {
+        .post_async("/curriculum/:id/modules", |req, ctx| async move {
             handle_modules(req, ctx).await
         })
-        .put_async("/api/modules/:id", |req, ctx| async move {
+        .put_async("/modules/:id", |req, ctx| async move {
             handle_modules(req, ctx).await
         })
-        .delete_async("/api/modules/:id", |req, ctx| async move {
+        .delete_async("/modules/:id", |req, ctx| async move {
             handle_modules(req, ctx).await
         })
-        .put_async("/api/modules/:id/reorder", |req, ctx| async move {
+        .put_async("/modules/:id/reorder", |req, ctx| async move {
             handle_modules(req, ctx).await
         })
         // Lesson endpoints
-        .get_async("/api/modules/:id/lessons", |req, ctx| async move {
+        .get_async("/modules/:id/lessons", |req, ctx| async move {
             handle_modules(req, ctx).await
         })
-        .post_async("/api/modules/:id/lessons", |req, ctx| async move {
+        .post_async("/modules/:id/lessons", |req, ctx| async move {
             handle_modules(req, ctx).await
         })
-        .put_async("/api/lessons/:id", |req, ctx| async move {
+        .put_async("/lessons/:id", |req, ctx| async move {
             handle_lessons(req, ctx).await
         })
-        .delete_async("/api/lessons/:id", |req, ctx| async move {
+        .delete_async("/lessons/:id", |req, ctx| async move {
             handle_lessons(req, ctx).await
         })
-        .put_async("/api/lessons/:id/reorder", |req, ctx| async move {
+        .put_async("/lessons/:id/reorder", |req, ctx| async move {
             handle_lessons(req, ctx).await
         })
-        .post_async("/api/lessons/:id/complete", |req, ctx| async move {
+        .post_async("/lessons/:id/complete", |req, ctx| async move {
             handle_lessons(req, ctx).await
         })
-        .post_async("/api/lessons/:id/progress", |req, ctx| async move {
+        .post_async("/lessons/:id/progress", |req, ctx| async move {
             handle_lessons(req, ctx).await
         })
         // Assignment endpoints
-        .get_async("/api/clubs/:club_id/assignments", |req, ctx| async move {
+        .get_async("/clubs/:club_id/assignments", |req, ctx| async move {
             handle_assignments(req, ctx).await
         })
-        .post_async("/api/clubs/:club_id/assignments", |req, ctx| async move {
+        .post_async("/clubs/:club_id/assignments", |req, ctx| async move {
             handle_assignments(req, ctx).await
         })
-        .get_async("/api/assignments/:id", |req, ctx| async move {
+        .get_async("/assignments/:id", |req, ctx| async move {
             handle_assignments(req, ctx).await
         })
-        .put_async("/api/assignments/:id", |req, ctx| async move {
+        .put_async("/assignments/:id", |req, ctx| async move {
             handle_assignments(req, ctx).await
         })
-        .delete_async("/api/assignments/:id", |req, ctx| async move {
+        .delete_async("/assignments/:id", |req, ctx| async move {
             handle_assignments(req, ctx).await
         })
         // Submission endpoints
-        .get_async("/api/assignments/:id/submissions", |req, ctx| async move {
+        .get_async("/assignments/:id/submissions", |req, ctx| async move {
             handle_assignments(req, ctx).await
         })
-        .get_async("/api/assignments/:id/submission", |req, ctx| async move {
+        .get_async("/assignments/:id/submission", |req, ctx| async move {
             handle_assignments(req, ctx).await
         })
-        .post_async("/api/assignments/:id/submit", |req, ctx| async move {
+        .post_async("/assignments/:id/submit", |req, ctx| async move {
             handle_assignments(req, ctx).await
         })
-        .get_async("/api/submissions/:id", |req, ctx| async move {
+        .get_async("/submissions/:id", |req, ctx| async move {
             handle_assignments(req, ctx).await
         })
-        .put_async("/api/submissions/:id", |req, ctx| async move {
+        .put_async("/submissions/:id", |req, ctx| async move {
             handle_assignments(req, ctx).await
         })
-        .put_async("/api/submissions/:id/grade", |req, ctx| async move {
+        .put_async("/submissions/:id/grade", |req, ctx| async move {
             handle_assignments(req, ctx).await
         })
         // Meeting endpoints
-        .get_async("/api/meetings", |req, ctx| async move {
+        .get_async("/meetings", |req, ctx| async move {
             // Require authentication for viewing meetings
             if crate::handlers::auth::get_user_id_from_token(&req, &ctx).is_none() {
                 return Response::error("Unauthorized", 401);
@@ -243,7 +243,7 @@ async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
             let meetings = get_meetings().await;
             Response::from_json(&meetings)
         })
-        .get_async("/api/meetings/:id", |req, ctx| async move {
+        .get_async("/meetings/:id", |req, ctx| async move {
             // Require authentication for viewing meeting details
             if crate::handlers::auth::get_user_id_from_token(&req, &ctx).is_none() {
                 return Response::error("Unauthorized", 401);
@@ -256,7 +256,7 @@ async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
             }
             Response::error("Meeting not found", 404)
         })
-        .post_async("/api/meetings", |mut req, ctx| async move {
+        .post_async("/meetings", |mut req, ctx| async move {
             // CSRF protection for meeting creation
             if !crate::handlers::auth::verify_csrf_token(&req, &ctx).await.unwrap_or(false) {
                 return Response::error("CSRF token validation failed", 403);
@@ -270,7 +270,7 @@ async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
                 Err(_) => Response::error("Invalid request body", 400),
             }
         })
-        .put_async("/api/meetings/:id", |mut req, ctx| async move {
+        .put_async("/meetings/:id", |mut req, ctx| async move {
             // CSRF protection for meeting updates
             if !crate::handlers::auth::verify_csrf_token(&req, &ctx).await.unwrap_or(false) {
                 return Response::error("CSRF token validation failed", 403);
@@ -288,7 +288,7 @@ async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
             }
             Response::error("Meeting not found", 404)
         })
-        .delete_async("/api/meetings/:id", |req, ctx| async move {
+        .delete_async("/meetings/:id", |req, ctx| async move {
             // CSRF protection for meeting deletion
             if !crate::handlers::auth::verify_csrf_token(&req, &ctx).await.unwrap_or(false) {
                 return Response::error("CSRF token validation failed", 403);
@@ -302,14 +302,14 @@ async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
             Response::error("Meeting not found", 404)
         })
         // RSVP endpoints
-        .get_async("/api/meetings/:id/rsvps", |_, ctx| async move {
+        .get_async("/meetings/:id/rsvps", |_, ctx| async move {
             if let Some(id) = ctx.param("id") {
                 let rsvps = get_rsvps(id).await;
                 return Response::from_json(&rsvps);
             }
             Response::error("Meeting not found", 404)
         })
-        .post_async("/api/meetings/:id/rsvps", |mut req, ctx| async move {
+        .post_async("/meetings/:id/rsvps", |mut req, ctx| async move {
             // CSRF protection for RSVP creation
             if !crate::handlers::auth::verify_csrf_token(&req, &ctx).await.unwrap_or(false) {
                 return Response::error("CSRF token validation failed", 403);
@@ -327,7 +327,7 @@ async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
             Response::error("Meeting not found", 404)
         })
         // Forum endpoints
-        .get_async("/api/forum/questions", |req, ctx| async move {
+        .get_async("/forum/questions", |req, ctx| async move {
             // Require authentication for viewing forum questions
             if crate::handlers::auth::get_user_id_from_token(&req, &ctx).is_none() {
                 return Response::error("Unauthorized", 401);
@@ -335,7 +335,7 @@ async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
             
             forum::get_questions().await
         })
-        .post_async("/api/forum/questions", |req, ctx| async move {
+        .post_async("/forum/questions", |req, ctx| async move {
             // CSRF protection for question creation
             if !crate::handlers::auth::verify_csrf_token(&req, &ctx).await.unwrap_or(false) {
                 return Response::error("CSRF token validation failed", 403);
@@ -343,7 +343,7 @@ async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
             
             forum::create_question(req).await
         })
-        .put_async("/api/forum/questions/:id/claim", |req, ctx| async move {
+        .put_async("/forum/questions/:id/claim", |req, ctx| async move {
             // CSRF protection for question claiming
             if !crate::handlers::auth::verify_csrf_token(&req, &ctx).await.unwrap_or(false) {
                 return Response::error("CSRF token validation failed", 403);
@@ -355,7 +355,7 @@ async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
                 Response::error("Invalid question ID", 400)
             }
         })
-        .put_async("/api/forum/questions/:id/resolve", |req, ctx| async move {
+        .put_async("/forum/questions/:id/resolve", |req, ctx| async move {
             // CSRF protection for question resolution
             if !crate::handlers::auth::verify_csrf_token(&req, &ctx).await.unwrap_or(false) {
                 return Response::error("CSRF token validation failed", 403);
@@ -367,7 +367,7 @@ async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
                 Response::error("Invalid question ID", 400)
             }
         })
-        .get_async("/api/forum/tags", |req, ctx| async move {
+        .get_async("/forum/tags", |req, ctx| async move {
             // Require authentication for viewing forum tags
             if crate::handlers::auth::get_user_id_from_token(&req, &ctx).is_none() {
                 return Response::error("Unauthorized", 401);
@@ -376,132 +376,132 @@ async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
             forum::get_tags().await
         })
         // Peer review endpoints
-        .get_async("/api/assignments/:id/peer-reviews/available", |req, ctx| async move {
+        .get_async("/assignments/:id/peer-reviews/available", |req, ctx| async move {
             handle_peer_reviews(req, ctx).await
         })
-        .get_async("/api/assignments/:id/peer-reviews", |req, ctx| async move {
+        .get_async("/assignments/:id/peer-reviews", |req, ctx| async move {
             handle_peer_reviews(req, ctx).await
         })
-        .post_async("/api/assignments/:id/peer-reviews", |req, ctx| async move {
+        .post_async("/assignments/:id/peer-reviews", |req, ctx| async move {
             handle_peer_reviews(req, ctx).await
         })
-        .get_async("/api/peer-reviews/:id", |req, ctx| async move {
+        .get_async("/peer-reviews/:id", |req, ctx| async move {
             handle_peer_reviews(req, ctx).await
         })
-        .put_async("/api/peer-reviews/:id", |req, ctx| async move {
+        .put_async("/peer-reviews/:id", |req, ctx| async move {
             handle_peer_reviews(req, ctx).await
         })
-        .delete_async("/api/peer-reviews/:id", |req, ctx| async move {
+        .delete_async("/peer-reviews/:id", |req, ctx| async move {
             handle_peer_reviews(req, ctx).await
         })
         // Badge endpoints
-        .get_async("/api/clubs/:club_id/badges", |req, ctx| async move {
+        .get_async("/clubs/:club_id/badges", |req, ctx| async move {
             handle_badges(req, ctx).await
         })
-        .post_async("/api/clubs/:club_id/badges", |req, ctx| async move {
+        .post_async("/clubs/:club_id/badges", |req, ctx| async move {
             handle_badges(req, ctx).await
         })
-        .get_async("/api/badges/:id", |req, ctx| async move {
+        .get_async("/badges/:id", |req, ctx| async move {
             handle_badges(req, ctx).await
         })
-        .put_async("/api/badges/:id", |req, ctx| async move {
+        .put_async("/badges/:id", |req, ctx| async move {
             handle_badges(req, ctx).await
         })
-        .delete_async("/api/badges/:id", |req, ctx| async move {
+        .delete_async("/badges/:id", |req, ctx| async move {
             handle_badges(req, ctx).await
         })
-        .post_async("/api/badges/:id/award", |req, ctx| async move {
+        .post_async("/badges/:id/award", |req, ctx| async move {
             handle_badges(req, ctx).await
         })
-        .get_async("/api/badges/user", |req, ctx| async move {
+        .get_async("/badges/user", |req, ctx| async move {
             handle_badges(req, ctx).await
         })
         // Certificate endpoints
-        .get_async("/api/clubs/:club_id/certificates", |req, ctx| async move {
+        .get_async("/clubs/:club_id/certificates", |req, ctx| async move {
             handle_certificates(req, ctx).await
         })
-        .post_async("/api/clubs/:club_id/certificates", |req, ctx| async move {
+        .post_async("/clubs/:club_id/certificates", |req, ctx| async move {
             handle_certificates(req, ctx).await
         })
-        .get_async("/api/certificates/:id", |req, ctx| async move {
+        .get_async("/certificates/:id", |req, ctx| async move {
             handle_certificates(req, ctx).await
         })
-        .put_async("/api/certificates/:id", |req, ctx| async move {
+        .put_async("/certificates/:id", |req, ctx| async move {
             handle_certificates(req, ctx).await
         })
-        .delete_async("/api/certificates/:id", |req, ctx| async move {
+        .delete_async("/certificates/:id", |req, ctx| async move {
             handle_certificates(req, ctx).await
         })
-        .post_async("/api/certificates/:id/issue", |req, ctx| async move {
+        .post_async("/certificates/:id/issue", |req, ctx| async move {
             handle_certificates(req, ctx).await
         })
-        .get_async("/api/certificates/:code/verify", |req, ctx| async move {
+        .get_async("/certificates/:code/verify", |req, ctx| async move {
             handle_certificates(req, ctx).await
         })
-        .get_async("/api/certificates/user", |req, ctx| async move {
+        .get_async("/certificates/user", |req, ctx| async move {
             handle_certificates(req, ctx).await
         })
         // Discussion endpoints
-        .get_async("/api/clubs/:club_id/discussions", |req, ctx| async move {
+        .get_async("/clubs/:club_id/discussions", |req, ctx| async move {
             handle_discussions(req, ctx).await
         })
-        .post_async("/api/clubs/:club_id/discussions", |req, ctx| async move {
+        .post_async("/clubs/:club_id/discussions", |req, ctx| async move {
             handle_discussions(req, ctx).await
         })
-        .get_async("/api/discussions/:id", |req, ctx| async move {
+        .get_async("/discussions/:id", |req, ctx| async move {
             handle_discussions(req, ctx).await
         })
-        .put_async("/api/discussions/:id", |req, ctx| async move {
+        .put_async("/discussions/:id", |req, ctx| async move {
             handle_discussions(req, ctx).await
         })
-        .delete_async("/api/discussions/:id", |req, ctx| async move {
+        .delete_async("/discussions/:id", |req, ctx| async move {
             handle_discussions(req, ctx).await
         })
-        .get_async("/api/discussions/:id/replies", |req, ctx| async move {
+        .get_async("/discussions/:id/replies", |req, ctx| async move {
             handle_discussions(req, ctx).await
         })
-        .post_async("/api/discussions/:id/replies", |req, ctx| async move {
+        .post_async("/discussions/:id/replies", |req, ctx| async move {
             handle_discussions(req, ctx).await
         })
-        .post_async("/api/discussions/:id/vote", |req, ctx| async move {
+        .post_async("/discussions/:id/vote", |req, ctx| async move {
             handle_discussions(req, ctx).await
         })
-        .post_async("/api/discussions/:id/answer", |req, ctx| async move {
+        .post_async("/discussions/:id/answer", |req, ctx| async move {
             handle_discussions(req, ctx).await
         })
-        .get_async("/api/discussions/search", |req, ctx| async move {
+        .get_async("/discussions/search", |req, ctx| async move {
             handle_discussions(req, ctx).await
         })
         // Progress tracking endpoints
-        .get_async("/api/clubs/:club_id/progress", |req, ctx| async move {
+        .get_async("/clubs/:club_id/progress", |req, ctx| async move {
             handle_progress(req, ctx).await
         })
-        .get_async("/api/curriculum/:id/progress", |req, ctx| async move {
+        .get_async("/curriculum/:id/progress", |req, ctx| async move {
             handle_progress(req, ctx).await
         })
-        .get_async("/api/clubs/:club_id/leaderboard", |req, ctx| async move {
+        .get_async("/clubs/:club_id/leaderboard", |req, ctx| async move {
             handle_progress(req, ctx).await
         })
-        .get_async("/api/clubs/:club_id/activity", |req, ctx| async move {
+        .get_async("/clubs/:club_id/activity", |req, ctx| async move {
             handle_progress(req, ctx).await
         })
         // Notification endpoints
-        .get_async("/api/notifications", |req, ctx| async move {
+        .get_async("/notifications", |req, ctx| async move {
             handle_notifications(req, ctx).await
         })
-        .put_async("/api/notifications/:id/read", |req, ctx| async move {
+        .put_async("/notifications/:id/read", |req, ctx| async move {
             handle_notifications(req, ctx).await
         })
-        .put_async("/api/notifications/read-all", |req, ctx| async move {
+        .put_async("/notifications/read-all", |req, ctx| async move {
             handle_notifications(req, ctx).await
         })
-        .delete_async("/api/notifications/:id", |req, ctx| async move {
+        .delete_async("/notifications/:id", |req, ctx| async move {
             handle_notifications(req, ctx).await
         })
-        .get_async("/api/notifications/preferences", |req, ctx| async move {
+        .get_async("/notifications/preferences", |req, ctx| async move {
             handle_notifications(req, ctx).await
         })
-        .put_async("/api/notifications/preferences", |req, ctx| async move {
+        .put_async("/notifications/preferences", |req, ctx| async move {
             handle_notifications(req, ctx).await
         })
         .run(req, env)

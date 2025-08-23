@@ -62,9 +62,8 @@ if ! command_exists wrangler; then
 fi
 echo -e "${GREEN}✅ Wrangler CLI is available${NC}"
 
-# Check if we have landing or app directories
+# Install landing app dependencies (static React with Vite)
 if [ -d "landing" ]; then
-    # Install landing app dependencies
     echo -e "${BLUE}Installing landing app dependencies...${NC}"
     cd landing
     if [ ! -d "node_modules" ] || [ "package.json" -nt "node_modules" ]; then
@@ -78,7 +77,8 @@ if [ -d "landing" ]; then
         echo -e "${YELLOW}Creating landing app .env file...${NC}"
         cat > .env << EOF
 # Landing App Configuration
-VITE_APP_URL=http://localhost:3001
+VITE_API_URL=http://localhost:8787
+VITE_APP_NAME=Cursoset
 EOF
         echo -e "${GREEN}✅ Landing app .env created${NC}"
     fi
@@ -86,30 +86,14 @@ EOF
     cd ..
 fi
 
-# Check if main app exists (it might not since we deleted it)
-if [ ! -d "app" ]; then
-    echo -e "${YELLOW}⚠️  Main app directory not found. The frontend was removed in the latest update.${NC}"
-    echo -e "${YELLOW}   The backend API is fully implemented and ready to use.${NC}"
-else
-    # Install main app dependencies
+# Install main app dependencies (static React with Vite)
+if [ -d "app" ]; then
     echo -e "${BLUE}Installing main app dependencies...${NC}"
     cd app
     if [ ! -d "node_modules" ] || [ "package.json" -nt "node_modules" ]; then
         npm install
     else
         echo -e "${GREEN}✅ Main app dependencies are up to date${NC}"
-    fi
-
-    # Create .env.local for main app if it doesn't exist
-    if [ ! -f ".env.local" ]; then
-        echo -e "${YELLOW}Creating main app .env.local file...${NC}"
-        cat > .env.local << EOF
-# Main App Configuration
-NEXT_PUBLIC_API_URL=http://localhost:8787
-NEXT_PUBLIC_APP_NAME=Cursoset
-NEXT_PUBLIC_LANDING_URL=http://localhost:3000
-EOF
-        echo -e "${GREEN}✅ Main app .env.local created${NC}"
     fi
 
     cd ..
@@ -182,34 +166,34 @@ if [ -z "$DEMO_EXISTS" ]; then
     fi
 fi
 
-# Start landing app development server if it exists
+# Start landing app development server (static React with Vite)
 if [ -d "landing" ]; then
-    echo -e "${GREEN}Starting landing app (port 3000)...${NC}"
+    echo -e "${GREEN}Starting landing page (port 3000)...${NC}"
     cd landing
     npm run dev &
     LANDING_PID=$!
     cd ..
     
-    # Wait for landing app to start
-    echo -e "${YELLOW}Waiting for landing app to start...${NC}"
+    # Wait for app to start
+    echo -e "${YELLOW}Waiting for landing page to start...${NC}"
     for i in {1..30}; do
         if curl -s http://localhost:3000/ > /dev/null 2>&1; then
-            echo -e "${GREEN}✅ Landing app is ready${NC}"
+            echo -e "${GREEN}✅ Landing page is ready${NC}"
             break
         fi
         sleep 1
     done
 fi
 
-# Start main app development server if it exists
+# Start main app development server (static React with Vite)
 if [ -d "app" ]; then
     echo -e "${GREEN}Starting main app (port 3001)...${NC}"
     cd app
     npm run dev &
-    MAIN_PID=$!
+    APP_PID=$!
     cd ..
     
-    # Wait for main app to start
+    # Wait for app to start
     echo -e "${YELLOW}Waiting for main app to start...${NC}"
     for i in {1..30}; do
         if curl -s http://localhost:3001/ > /dev/null 2>&1; then
@@ -240,8 +224,8 @@ echo -e "${BLUE}   📧 Email: demo@nivaro.com${NC}"
 echo -e "${BLUE}   🔑 Password: DemoPass123@${NC}"
 echo -e ""
 echo -e "${YELLOW}Stack: Rust/Cloudflare Workers Backend${NC}"
-if [ -d "app" ] || [ -d "landing" ]; then
-    echo -e "${YELLOW}       + Next.js Frontend${NC}"
+if [ -d "landing" ]; then
+    echo -e "${YELLOW}       + Static React (Vite) Frontend${NC}"
 fi
 echo -e ""
 echo -e "${YELLOW}Press Ctrl+C to stop all servers${NC}"

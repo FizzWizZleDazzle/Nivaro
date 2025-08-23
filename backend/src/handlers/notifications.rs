@@ -85,7 +85,7 @@ async fn get_notifications(req: Request, ctx: RouteContext<()>) -> Result<Respon
     query.push_str(" ORDER BY created_at DESC LIMIT 50");
     
     let stmt = db.prepare(&query);
-    let stmt = stmt.bind(&vec![user_id.into()])?;
+    let stmt = stmt.bind(&vec![user_id.clone().into()])?;
     
     let results = stmt.all().await?;
     let notifications = results.results::<serde_json::Value>()?;
@@ -233,6 +233,7 @@ async fn get_preferences(req: Request, ctx: RouteContext<()>) -> Result<Response
     let result = stmt.first::<serde_json::Value>(None).await?;
     
     let preferences = result
+        .as_ref()
         .and_then(|r| r["notification_preferences"].as_str())
         .and_then(|s| serde_json::from_str::<serde_json::Value>(s).ok())
         .unwrap_or_else(|| json!({
