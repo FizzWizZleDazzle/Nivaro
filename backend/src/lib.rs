@@ -144,6 +144,95 @@ async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
         .post_async("/api/projects", |req, ctx| async move {
             handle_projects(req, ctx).await
         })
+        // Curriculum endpoints
+        .get_async("/api/clubs/:club_id/curriculum", |req, ctx| async move {
+            handle_curriculum(req, ctx).await
+        })
+        .post_async("/api/clubs/:club_id/curriculum", |req, ctx| async move {
+            handle_curriculum(req, ctx).await
+        })
+        .put_async("/api/clubs/:club_id/curriculum/:curriculum_id", |req, ctx| async move {
+            handle_curriculum(req, ctx).await
+        })
+        .delete_async("/api/curriculum/:id", |req, ctx| async move {
+            handle_curriculum(req, ctx).await
+        })
+        .post_async("/api/curriculum/:id/publish", |req, ctx| async move {
+            handle_curriculum(req, ctx).await
+        })
+        // Module endpoints
+        .get_async("/api/curriculum/:id/modules", |req, ctx| async move {
+            handle_modules(req, ctx).await
+        })
+        .post_async("/api/curriculum/:id/modules", |req, ctx| async move {
+            handle_modules(req, ctx).await
+        })
+        .put_async("/api/modules/:id", |req, ctx| async move {
+            handle_modules(req, ctx).await
+        })
+        .delete_async("/api/modules/:id", |req, ctx| async move {
+            handle_modules(req, ctx).await
+        })
+        .put_async("/api/modules/:id/reorder", |req, ctx| async move {
+            handle_modules(req, ctx).await
+        })
+        // Lesson endpoints
+        .get_async("/api/modules/:id/lessons", |req, ctx| async move {
+            handle_modules(req, ctx).await
+        })
+        .post_async("/api/modules/:id/lessons", |req, ctx| async move {
+            handle_modules(req, ctx).await
+        })
+        .put_async("/api/lessons/:id", |req, ctx| async move {
+            handle_lessons(req, ctx).await
+        })
+        .delete_async("/api/lessons/:id", |req, ctx| async move {
+            handle_lessons(req, ctx).await
+        })
+        .put_async("/api/lessons/:id/reorder", |req, ctx| async move {
+            handle_lessons(req, ctx).await
+        })
+        .post_async("/api/lessons/:id/complete", |req, ctx| async move {
+            handle_lessons(req, ctx).await
+        })
+        .post_async("/api/lessons/:id/progress", |req, ctx| async move {
+            handle_lessons(req, ctx).await
+        })
+        // Assignment endpoints
+        .get_async("/api/clubs/:club_id/assignments", |req, ctx| async move {
+            handle_assignments(req, ctx).await
+        })
+        .post_async("/api/clubs/:club_id/assignments", |req, ctx| async move {
+            handle_assignments(req, ctx).await
+        })
+        .get_async("/api/assignments/:id", |req, ctx| async move {
+            handle_assignments(req, ctx).await
+        })
+        .put_async("/api/assignments/:id", |req, ctx| async move {
+            handle_assignments(req, ctx).await
+        })
+        .delete_async("/api/assignments/:id", |req, ctx| async move {
+            handle_assignments(req, ctx).await
+        })
+        // Submission endpoints
+        .get_async("/api/assignments/:id/submissions", |req, ctx| async move {
+            handle_assignments(req, ctx).await
+        })
+        .get_async("/api/assignments/:id/submission", |req, ctx| async move {
+            handle_assignments(req, ctx).await
+        })
+        .post_async("/api/assignments/:id/submit", |req, ctx| async move {
+            handle_assignments(req, ctx).await
+        })
+        .get_async("/api/submissions/:id", |req, ctx| async move {
+            handle_assignments(req, ctx).await
+        })
+        .put_async("/api/submissions/:id", |req, ctx| async move {
+            handle_assignments(req, ctx).await
+        })
+        .put_async("/api/submissions/:id/grade", |req, ctx| async move {
+            handle_assignments(req, ctx).await
+        })
         // Meeting endpoints
         .get_async("/api/meetings", |req, ctx| async move {
             // Require authentication for viewing meetings
@@ -285,6 +374,135 @@ async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
             }
             
             forum::get_tags().await
+        })
+        // Peer review endpoints
+        .get_async("/api/assignments/:id/peer-reviews/available", |req, ctx| async move {
+            handle_peer_reviews(req, ctx).await
+        })
+        .get_async("/api/assignments/:id/peer-reviews", |req, ctx| async move {
+            handle_peer_reviews(req, ctx).await
+        })
+        .post_async("/api/assignments/:id/peer-reviews", |req, ctx| async move {
+            handle_peer_reviews(req, ctx).await
+        })
+        .get_async("/api/peer-reviews/:id", |req, ctx| async move {
+            handle_peer_reviews(req, ctx).await
+        })
+        .put_async("/api/peer-reviews/:id", |req, ctx| async move {
+            handle_peer_reviews(req, ctx).await
+        })
+        .delete_async("/api/peer-reviews/:id", |req, ctx| async move {
+            handle_peer_reviews(req, ctx).await
+        })
+        // Badge endpoints
+        .get_async("/api/clubs/:club_id/badges", |req, ctx| async move {
+            handle_badges(req, ctx).await
+        })
+        .post_async("/api/clubs/:club_id/badges", |req, ctx| async move {
+            handle_badges(req, ctx).await
+        })
+        .get_async("/api/badges/:id", |req, ctx| async move {
+            handle_badges(req, ctx).await
+        })
+        .put_async("/api/badges/:id", |req, ctx| async move {
+            handle_badges(req, ctx).await
+        })
+        .delete_async("/api/badges/:id", |req, ctx| async move {
+            handle_badges(req, ctx).await
+        })
+        .post_async("/api/badges/:id/award", |req, ctx| async move {
+            handle_badges(req, ctx).await
+        })
+        .get_async("/api/badges/user", |req, ctx| async move {
+            handle_badges(req, ctx).await
+        })
+        // Certificate endpoints
+        .get_async("/api/clubs/:club_id/certificates", |req, ctx| async move {
+            handle_certificates(req, ctx).await
+        })
+        .post_async("/api/clubs/:club_id/certificates", |req, ctx| async move {
+            handle_certificates(req, ctx).await
+        })
+        .get_async("/api/certificates/:id", |req, ctx| async move {
+            handle_certificates(req, ctx).await
+        })
+        .put_async("/api/certificates/:id", |req, ctx| async move {
+            handle_certificates(req, ctx).await
+        })
+        .delete_async("/api/certificates/:id", |req, ctx| async move {
+            handle_certificates(req, ctx).await
+        })
+        .post_async("/api/certificates/:id/issue", |req, ctx| async move {
+            handle_certificates(req, ctx).await
+        })
+        .get_async("/api/certificates/:code/verify", |req, ctx| async move {
+            handle_certificates(req, ctx).await
+        })
+        .get_async("/api/certificates/user", |req, ctx| async move {
+            handle_certificates(req, ctx).await
+        })
+        // Discussion endpoints
+        .get_async("/api/clubs/:club_id/discussions", |req, ctx| async move {
+            handle_discussions(req, ctx).await
+        })
+        .post_async("/api/clubs/:club_id/discussions", |req, ctx| async move {
+            handle_discussions(req, ctx).await
+        })
+        .get_async("/api/discussions/:id", |req, ctx| async move {
+            handle_discussions(req, ctx).await
+        })
+        .put_async("/api/discussions/:id", |req, ctx| async move {
+            handle_discussions(req, ctx).await
+        })
+        .delete_async("/api/discussions/:id", |req, ctx| async move {
+            handle_discussions(req, ctx).await
+        })
+        .get_async("/api/discussions/:id/replies", |req, ctx| async move {
+            handle_discussions(req, ctx).await
+        })
+        .post_async("/api/discussions/:id/replies", |req, ctx| async move {
+            handle_discussions(req, ctx).await
+        })
+        .post_async("/api/discussions/:id/vote", |req, ctx| async move {
+            handle_discussions(req, ctx).await
+        })
+        .post_async("/api/discussions/:id/answer", |req, ctx| async move {
+            handle_discussions(req, ctx).await
+        })
+        .get_async("/api/discussions/search", |req, ctx| async move {
+            handle_discussions(req, ctx).await
+        })
+        // Progress tracking endpoints
+        .get_async("/api/clubs/:club_id/progress", |req, ctx| async move {
+            handle_progress(req, ctx).await
+        })
+        .get_async("/api/curriculum/:id/progress", |req, ctx| async move {
+            handle_progress(req, ctx).await
+        })
+        .get_async("/api/clubs/:club_id/leaderboard", |req, ctx| async move {
+            handle_progress(req, ctx).await
+        })
+        .get_async("/api/clubs/:club_id/activity", |req, ctx| async move {
+            handle_progress(req, ctx).await
+        })
+        // Notification endpoints
+        .get_async("/api/notifications", |req, ctx| async move {
+            handle_notifications(req, ctx).await
+        })
+        .put_async("/api/notifications/:id/read", |req, ctx| async move {
+            handle_notifications(req, ctx).await
+        })
+        .put_async("/api/notifications/read-all", |req, ctx| async move {
+            handle_notifications(req, ctx).await
+        })
+        .delete_async("/api/notifications/:id", |req, ctx| async move {
+            handle_notifications(req, ctx).await
+        })
+        .get_async("/api/notifications/preferences", |req, ctx| async move {
+            handle_notifications(req, ctx).await
+        })
+        .put_async("/api/notifications/preferences", |req, ctx| async move {
+            handle_notifications(req, ctx).await
         })
         .run(req, env)
         .await

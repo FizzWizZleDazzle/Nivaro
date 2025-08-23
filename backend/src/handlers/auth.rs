@@ -28,6 +28,7 @@ pub async fn handle_auth(req: Request, ctx: RouteContext<()>) -> Result<Response
         (Method::Post, "/api/auth/change-password") => change_password(req, ctx).await,
         (Method::Post, "/api/auth/verify-email") => verify_email(req, ctx).await,
         (Method::Get, "/api/auth/me") => get_current_user(req, ctx).await,
+        (Method::Get, "/api/auth/csrf") => get_csrf_token(req, ctx).await,
         (Method::Put, "/api/auth/profile") => update_profile(req, ctx).await,
         (Method::Delete, "/api/auth/account") => delete_account(req, ctx).await,
         (Method::Post, "/api/auth/social") => social_login(req, ctx).await,

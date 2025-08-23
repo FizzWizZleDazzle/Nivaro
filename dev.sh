@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# Nivaro Development Script for React Apps
-# This script sets up and runs the development environment for both React apps
+# Cursoset Development Script
+# This script sets up and runs the full development stack
 
 set -e
 
-echo "🚀 Starting Nivaro Development Environment (React + Vite)..."
+echo "🚀 Starting Cursoset Development Environment..."
 
 # Colors for output
 RED='\033[0;31m'
@@ -64,7 +64,7 @@ echo -e "${GREEN}✅ Wrangler CLI is available${NC}"
 
 # Install landing app dependencies
 echo -e "${BLUE}Installing landing app dependencies...${NC}"
-cd app/landing-app
+cd landing
 if [ ! -d "node_modules" ] || [ "package.json" -nt "node_modules" ]; then
     npm install
 else
@@ -81,30 +81,30 @@ EOF
     echo -e "${GREEN}✅ Landing app .env created${NC}"
 fi
 
-cd ../..
+cd ..
 
 # Install main app dependencies
 echo -e "${BLUE}Installing main app dependencies...${NC}"
-cd app/main-app
+cd app
 if [ ! -d "node_modules" ] || [ "package.json" -nt "node_modules" ]; then
     npm install
 else
     echo -e "${GREEN}✅ Main app dependencies are up to date${NC}"
 fi
 
-# Create .env for main app if it doesn't exist
-if [ ! -f ".env" ]; then
-    echo -e "${YELLOW}Creating main app .env file...${NC}"
-    cat > .env << EOF
+# Create .env.local for main app if it doesn't exist
+if [ ! -f ".env.local" ]; then
+    echo -e "${YELLOW}Creating main app .env.local file...${NC}"
+    cat > .env.local << EOF
 # Main App Configuration
-VITE_API_URL=http://localhost:8788
-VITE_APP_NAME=Nivaro
-VITE_LANDING_URL=http://localhost:3000
+NEXT_PUBLIC_API_URL=http://localhost:8787
+NEXT_PUBLIC_APP_NAME=Cursoset
+NEXT_PUBLIC_LANDING_URL=http://localhost:3000
 EOF
-    echo -e "${GREEN}✅ Main app .env created${NC}"
+    echo -e "${GREEN}✅ Main app .env.local created${NC}"
 fi
 
-cd ../..
+cd ..
 
 # Build backend
 echo -e "${BLUE}Building backend...${NC}"
@@ -139,14 +139,14 @@ trap cleanup SIGINT SIGTERM
 # Start backend development server
 echo -e "${GREEN}Starting backend server...${NC}"
 cd backend
-wrangler dev --local --port 8788 &
+wrangler dev --local --port 8787 &
 BACKEND_PID=$!
 cd ..
 
 # Wait for backend to start
 echo -e "${YELLOW}Waiting for backend to start...${NC}"
 for i in {1..30}; do
-    if curl -s http://localhost:8788/ > /dev/null 2>&1; then
+    if curl -s http://localhost:8787/ > /dev/null 2>&1; then
         echo -e "${GREEN}✅ Backend is ready${NC}"
         break
     fi
@@ -159,7 +159,7 @@ if [ -z "$DEMO_EXISTS" ]; then
     echo -e "${YELLOW}Creating demo user account...${NC}"
     
     # Use the signup API endpoint to create the demo user with a stronger password
-    SIGNUP_RESPONSE=$(curl -s -X POST http://localhost:8788/api/auth/signup \
+    SIGNUP_RESPONSE=$(curl -s -X POST http://localhost:8787/api/auth/signup \
         -H "Content-Type: application/json" \
         -H "Origin: http://localhost:3000" \
         -d '{"email":"demo@nivaro.com","password":"DemoPass123@","name":"Demo User"}' 2>/dev/null)
@@ -175,17 +175,17 @@ fi
 
 # Start landing app development server
 echo -e "${GREEN}Starting landing app (port 3000)...${NC}"
-cd app/landing-app
+cd landing
 npm run dev &
 LANDING_PID=$!
-cd ../..
+cd ..
 
 # Start main app development server
 echo -e "${GREEN}Starting main app (port 3001)...${NC}"
-cd app/main-app
+cd app
 npm run dev &
 MAIN_PID=$!
-cd ../..
+cd ..
 
 # Wait for landing app to start
 echo -e "${YELLOW}Waiting for landing app to start...${NC}"
@@ -207,17 +207,17 @@ for i in {1..30}; do
     sleep 1
 done
 
-echo -e "${GREEN}🎉 Development environment is ready!${NC}"
+echo -e "${GREEN}🎉 Cursoset Development Environment is ready!${NC}"
 echo -e ""
 echo -e "${BLUE}🌐 Landing Page: http://localhost:3000${NC}"
 echo -e "${BLUE}📱 Main App: http://localhost:3001${NC}"
-echo -e "${BLUE}🔧 Backend API: http://localhost:8788${NC}"
+echo -e "${BLUE}🔧 Backend API: http://localhost:8787${NC}"
 echo -e ""
 echo -e "${GREEN}Demo Account Credentials:${NC}"
 echo -e "${BLUE}   📧 Email: demo@nivaro.com${NC}"
 echo -e "${BLUE}   🔑 Password: DemoPass123@${NC}"
 echo -e ""
-echo -e "${YELLOW}Architecture: React + Vite (Static Build Ready)${NC}"
+echo -e "${YELLOW}Stack: Next.js + Rust/Cloudflare Workers${NC}"
 echo -e ""
 echo -e "${YELLOW}Press Ctrl+C to stop all servers${NC}"
 

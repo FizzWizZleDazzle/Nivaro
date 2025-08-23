@@ -193,3 +193,193 @@ CREATE INDEX IF NOT EXISTS idx_projects_created_by ON projects(created_by);
 CREATE INDEX IF NOT EXISTS idx_invite_codes_club_id ON invite_codes(club_id);
 CREATE INDEX IF NOT EXISTS idx_invite_codes_expires_at ON invite_codes(expires_at);
 CREATE INDEX IF NOT EXISTS idx_invite_codes_used_by ON invite_codes(used_by);
+
+-- Curriculum and Learning Tables
+
+-- Curricula table (main curriculum for a club)
+CREATE TABLE IF NOT EXISTS curricula (
+    id TEXT PRIMARY KEY,
+    club_id TEXT NOT NULL,
+    title TEXT NOT NULL,
+    description TEXT,
+    created_by TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    is_published INTEGER DEFAULT 0,
+    FOREIGN KEY (club_id) REFERENCES clubs(id) ON DELETE CASCADE,
+    FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- Modules table (sections within a curriculum)
+CREATE TABLE IF NOT EXISTS modules (
+    id TEXT PRIMARY KEY,
+    curriculum_id TEXT NOT NULL,
+    title TEXT NOT NULL,
+    description TEXT,
+    order_index INTEGER NOT NULL,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    FOREIGN KEY (curriculum_id) REFERENCES curricula(id) ON DELETE CASCADE
+);
+
+-- Lessons table (individual lessons within modules)
+CREATE TABLE IF NOT EXISTS lessons (
+    id TEXT PRIMARY KEY,
+    module_id TEXT NOT NULL,
+    title TEXT NOT NULL,
+    content TEXT NOT NULL,
+    lesson_type TEXT CHECK (lesson_type IN ('video', 'text', 'quiz', 'assignment')),
+    video_url TEXT,
+    duration_minutes INTEGER,
+    order_index INTEGER NOT NULL,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    FOREIGN KEY (module_id) REFERENCES modules(id) ON DELETE CASCADE
+);
+
+-- Assignments table (tasks for students)
+CREATE TABLE IF NOT EXISTS assignments (
+    id TEXT PRIMARY KEY,
+    club_id TEXT NOT NULL,
+    lesson_id TEXT,
+    title TEXT NOT NULL,
+    description TEXT NOT NULL,
+    due_date TEXT,
+    max_points INTEGER DEFAULT 100,
+    created_by TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    FOREIGN KEY (club_id) REFERENCES clubs(id) ON DELETE CASCADE,
+    FOREIGN KEY (lesson_id) REFERENCES lessons(id) ON DELETE SET NULL,
+    FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- Submissions table (student submissions for assignments)
+CREATE TABLE IF NOT EXISTS submissions (
+    id TEXT PRIMARY KEY,
+    assignment_id TEXT NOT NULL,
+    user_id TEXT NOT NULL,
+    content TEXT,
+    file_url TEXT,
+    status TEXT CHECK (status IN ('draft', 'submitted', 'graded', 'returned')),
+    points_earned INTEGER,
+    feedback TEXT,
+    submitted_at TEXT,
+    graded_at TEXT,
+    graded_by TEXT,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    FOREIGN KEY (assignment_id) REFERENCES assignments(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (graded_by) REFERENCES users(id) ON DELETE SET NULL,
+    UNIQUE(assignment_id, user_id)
+);
+
+-- Peer reviews table
+CREATE TABLE IF NOT EXISTS peer_reviews (
+    id TEXT PRIMARY KEY,
+    submission_id TEXT NOT NULL,
+    reviewer_id TEXT NOT NULL,
+    rubric_scores TEXT, -- JSON string of rubric scores
+    comments TEXT,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    FOREIGN KEY (submission_id) REFERENCES submissions(id) ON DELETE CASCADE,
+    FOREIGN KEY (reviewer_id) REFERENCES users(id) ON DELETE CASCADE,
+    UNIQUE(submission_id, reviewer_id)
+);
+
+-- Progress tracking table
+CREATE TABLE IF NOT EXISTS user_progress (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    lesson_id TEXT NOT NULL,
+    completed INTEGER DEFAULT 0,
+    completed_at TEXT,
+    time_spent_minutes INTEGER DEFAULT 0,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (lesson_id) REFERENCES lessons(id) ON DELETE CASCADE,
+    UNIQUE(user_id, lesson_id)
+);
+
+-- Badges table
+CREATE TABLE IF NOT EXISTS badges (
+    id TEXT PRIMARY KEY,
+    club_id TEXT NOT NULL,
+    name TEXT NOT NULL,
+    description TEXT,
+    icon_url TEXT,
+    criteria TEXT, -- JSON string defining earning criteria
+    created_at TEXT NOT NULL,
+    FOREIGN KEY (club_id) REFERENCES clubs(id) ON DELETE CASCADE
+);
+
+-- User badges table (earned badges)
+CREATE TABLE IF NOT EXISTS user_badges (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    badge_id TEXT NOT NULL,
+    earned_at TEXT NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (badge_id) REFERENCES badges(id) ON DELETE CASCADE,
+    UNIQUE(user_id, badge_id)
+);
+
+-- Discussion forums table
+CREATE TABLE IF NOT EXISTS discussions (
+    id TEXT PRIMARY KEY,
+    club_id TEXT NOT NULL,
+    lesson_id TEXT,
+    title TEXT NOT NULL,
+    content TEXT NOT NULL,
+    author_id TEXT NOT NULL,
+    is_pinned INTEGER DEFAULT 0,
+    is_locked INTEGER DEFAULT 0,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    FOREIGN KEY (club_id) REFERENCES clubs(id) ON DELETE CASCADE,
+    FOREIGN KEY (lesson_id) REFERENCES lessons(id) ON DELETE SET NULL,
+    FOREIGN KEY (author_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- Discussion replies table
+CREATE TABLE IF NOT EXISTS discussion_replies (
+    id TEXT PRIMARY KEY,
+    discussion_id TEXT NOT NULL,
+    author_id TEXT NOT NULL,
+    content TEXT NOT NULL,
+    is_solution INTEGER DEFAULT 0,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    FOREIGN KEY (discussion_id) REFERENCES discussions(id) ON DELETE CASCADE,
+    FOREIGN KEY (author_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- Notifications table
+CREATE TABLE IF NOT EXISTS notifications (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    type TEXT NOT NULL,
+    title TEXT NOT NULL,
+    message TEXT NOT NULL,
+    link TEXT,
+    is_read INTEGER DEFAULT 0,
+    created_at TEXT NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- Create indexes for new tables
+CREATE INDEX IF NOT EXISTS idx_curricula_club_id ON curricula(club_id);
+CREATE INDEX IF NOT EXISTS idx_modules_curriculum_id ON modules(curriculum_id);
+CREATE INDEX IF NOT EXISTS idx_lessons_module_id ON lessons(module_id);
+CREATE INDEX IF NOT EXISTS idx_assignments_club_id ON assignments(club_id);
+CREATE INDEX IF NOT EXISTS idx_assignments_lesson_id ON assignments(lesson_id);
+CREATE INDEX IF NOT EXISTS idx_submissions_assignment_id ON submissions(assignment_id);
+CREATE INDEX IF NOT EXISTS idx_submissions_user_id ON submissions(user_id);
+CREATE INDEX IF NOT EXISTS idx_peer_reviews_submission_id ON peer_reviews(submission_id);
+CREATE INDEX IF NOT EXISTS idx_user_progress_user_id ON user_progress(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_progress_lesson_id ON user_progress(lesson_id);
+CREATE INDEX IF NOT EXISTS idx_user_badges_user_id ON user_badges(user_id);
+CREATE INDEX IF NOT EXISTS idx_discussions_club_id ON discussions(club_id);
+CREATE INDEX IF NOT EXISTS idx_discussion_replies_discussion_id ON discussion_replies(discussion_id);
+CREATE INDEX IF NOT EXISTS idx_notifications_user_id ON notifications(user_id);
