@@ -62,49 +62,58 @@ if ! command_exists wrangler; then
 fi
 echo -e "${GREEN}✅ Wrangler CLI is available${NC}"
 
-# Install landing app dependencies
-echo -e "${BLUE}Installing landing app dependencies...${NC}"
-cd landing
-if [ ! -d "node_modules" ] || [ "package.json" -nt "node_modules" ]; then
-    npm install
-else
-    echo -e "${GREEN}✅ Landing app dependencies are up to date${NC}"
-fi
+# Check if we have landing or app directories
+if [ -d "landing" ]; then
+    # Install landing app dependencies
+    echo -e "${BLUE}Installing landing app dependencies...${NC}"
+    cd landing
+    if [ ! -d "node_modules" ] || [ "package.json" -nt "node_modules" ]; then
+        npm install
+    else
+        echo -e "${GREEN}✅ Landing app dependencies are up to date${NC}"
+    fi
 
-# Create .env for landing app if it doesn't exist
-if [ ! -f ".env" ]; then
-    echo -e "${YELLOW}Creating landing app .env file...${NC}"
-    cat > .env << EOF
+    # Create .env for landing app if it doesn't exist
+    if [ ! -f ".env" ]; then
+        echo -e "${YELLOW}Creating landing app .env file...${NC}"
+        cat > .env << EOF
 # Landing App Configuration
 VITE_APP_URL=http://localhost:3001
 EOF
-    echo -e "${GREEN}✅ Landing app .env created${NC}"
+        echo -e "${GREEN}✅ Landing app .env created${NC}"
+    fi
+
+    cd ..
 fi
 
-cd ..
-
-# Install main app dependencies
-echo -e "${BLUE}Installing main app dependencies...${NC}"
-cd app
-if [ ! -d "node_modules" ] || [ "package.json" -nt "node_modules" ]; then
-    npm install
+# Check if main app exists (it might not since we deleted it)
+if [ ! -d "app" ]; then
+    echo -e "${YELLOW}⚠️  Main app directory not found. The frontend was removed in the latest update.${NC}"
+    echo -e "${YELLOW}   The backend API is fully implemented and ready to use.${NC}"
 else
-    echo -e "${GREEN}✅ Main app dependencies are up to date${NC}"
-fi
+    # Install main app dependencies
+    echo -e "${BLUE}Installing main app dependencies...${NC}"
+    cd app
+    if [ ! -d "node_modules" ] || [ "package.json" -nt "node_modules" ]; then
+        npm install
+    else
+        echo -e "${GREEN}✅ Main app dependencies are up to date${NC}"
+    fi
 
-# Create .env.local for main app if it doesn't exist
-if [ ! -f ".env.local" ]; then
-    echo -e "${YELLOW}Creating main app .env.local file...${NC}"
-    cat > .env.local << EOF
+    # Create .env.local for main app if it doesn't exist
+    if [ ! -f ".env.local" ]; then
+        echo -e "${YELLOW}Creating main app .env.local file...${NC}"
+        cat > .env.local << EOF
 # Main App Configuration
 NEXT_PUBLIC_API_URL=http://localhost:8787
 NEXT_PUBLIC_APP_NAME=Cursoset
 NEXT_PUBLIC_LANDING_URL=http://localhost:3000
 EOF
-    echo -e "${GREEN}✅ Main app .env.local created${NC}"
-fi
+        echo -e "${GREEN}✅ Main app .env.local created${NC}"
+    fi
 
-cd ..
+    cd ..
+fi
 
 # Build backend
 echo -e "${BLUE}Building backend...${NC}"
@@ -173,51 +182,67 @@ if [ -z "$DEMO_EXISTS" ]; then
     fi
 fi
 
-# Start landing app development server
-echo -e "${GREEN}Starting landing app (port 3000)...${NC}"
-cd landing
-npm run dev &
-LANDING_PID=$!
-cd ..
+# Start landing app development server if it exists
+if [ -d "landing" ]; then
+    echo -e "${GREEN}Starting landing app (port 3000)...${NC}"
+    cd landing
+    npm run dev &
+    LANDING_PID=$!
+    cd ..
+    
+    # Wait for landing app to start
+    echo -e "${YELLOW}Waiting for landing app to start...${NC}"
+    for i in {1..30}; do
+        if curl -s http://localhost:3000/ > /dev/null 2>&1; then
+            echo -e "${GREEN}✅ Landing app is ready${NC}"
+            break
+        fi
+        sleep 1
+    done
+fi
 
-# Start main app development server
-echo -e "${GREEN}Starting main app (port 3001)...${NC}"
-cd app
-npm run dev &
-MAIN_PID=$!
-cd ..
-
-# Wait for landing app to start
-echo -e "${YELLOW}Waiting for landing app to start...${NC}"
-for i in {1..30}; do
-    if curl -s http://localhost:3000/ > /dev/null 2>&1; then
-        echo -e "${GREEN}✅ Landing app is ready${NC}"
-        break
-    fi
-    sleep 1
-done
-
-# Wait for main app to start
-echo -e "${YELLOW}Waiting for main app to start...${NC}"
-for i in {1..30}; do
-    if curl -s http://localhost:3001/ > /dev/null 2>&1; then
-        echo -e "${GREEN}✅ Main app is ready${NC}"
-        break
-    fi
-    sleep 1
-done
+# Start main app development server if it exists
+if [ -d "app" ]; then
+    echo -e "${GREEN}Starting main app (port 3001)...${NC}"
+    cd app
+    npm run dev &
+    MAIN_PID=$!
+    cd ..
+    
+    # Wait for main app to start
+    echo -e "${YELLOW}Waiting for main app to start...${NC}"
+    for i in {1..30}; do
+        if curl -s http://localhost:3001/ > /dev/null 2>&1; then
+            echo -e "${GREEN}✅ Main app is ready${NC}"
+            break
+        fi
+        sleep 1
+    done
+fi
 
 echo -e "${GREEN}🎉 Cursoset Development Environment is ready!${NC}"
 echo -e ""
-echo -e "${BLUE}🌐 Landing Page: http://localhost:3000${NC}"
-echo -e "${BLUE}📱 Main App: http://localhost:3001${NC}"
+if [ -d "landing" ]; then
+    echo -e "${BLUE}🌐 Landing Page: http://localhost:3000${NC}"
+fi
+if [ -d "app" ]; then
+    echo -e "${BLUE}📱 Main App: http://localhost:3001${NC}"
+fi
 echo -e "${BLUE}🔧 Backend API: http://localhost:8787${NC}"
+echo -e ""
+echo -e "${GREEN}Backend API Endpoints:${NC}"
+echo -e "${BLUE}   📚 Full API documentation in BACKEND_ENDPOINTS.txt${NC}"
+echo -e "${BLUE}   ✅ All curriculum, assignments, peer reviews, badges,${NC}"
+echo -e "${BLUE}      discussions, and progress tracking endpoints ready${NC}"
 echo -e ""
 echo -e "${GREEN}Demo Account Credentials:${NC}"
 echo -e "${BLUE}   📧 Email: demo@nivaro.com${NC}"
 echo -e "${BLUE}   🔑 Password: DemoPass123@${NC}"
 echo -e ""
-echo -e "${YELLOW}Stack: Next.js + Rust/Cloudflare Workers${NC}"
+echo -e "${YELLOW}Stack: Rust/Cloudflare Workers Backend${NC}"
+if [ -d "app" ] || [ -d "landing" ]; then
+    echo -e "${YELLOW}       + Next.js Frontend${NC}"
+fi
 echo -e ""
 echo -e "${YELLOW}Press Ctrl+C to stop all servers${NC}"
 
