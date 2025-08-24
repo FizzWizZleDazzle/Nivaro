@@ -1,5 +1,5 @@
 use crate::models::*;
-use crate::handlers::auth::verify_csrf_token;
+use crate::handlers::auth::{verify_csrf_token, get_user_id_from_token};
 use chrono::Utc;
 use uuid::Uuid;
 use worker::*;
@@ -47,7 +47,7 @@ async fn get_clubs(ctx: RouteContext<()>) -> Result<Response> {
     };
 
     // Query all clubs from database
-    let stmt = db.prepare("SELECT id, name, description, avatar, created_at, updated_at, owner_id FROM clubs ORDER BY created_at DESC");
+    let stmt = db.prepare("SELECT id, name, description, avatar_url, owner_id, settings, created_at, updated_at, is_active, member_count FROM clubs WHERE is_active = 1 ORDER BY created_at DESC");
     let results = match stmt.all().await {
         Ok(results) => results.results::<serde_json::Value>().ok().unwrap_or_default(),
         Err(_) => return Response::error("Failed to fetch clubs", 500),
@@ -60,10 +60,14 @@ async fn get_clubs(ctx: RouteContext<()>) -> Result<Response> {
                 id: row["id"].as_str()?.to_string(),
                 name: row["name"].as_str()?.to_string(),
                 description: row["description"].as_str().map(|s| s.to_string()),
-                avatar: row["avatar"].as_str().map(|s| s.to_string()),
+                avatar_url: row["avatar_url"].as_str().map(|s| s.to_string()),
+                owner_id: row["owner_id"].as_str()?.to_string(),
+                settings: row["settings"].as_str()
+                    .and_then(|s| serde_json::from_str(s).ok()),
                 created_at: row["created_at"].as_str()?.to_string(),
                 updated_at: row["updated_at"].as_str()?.to_string(),
-                owner_id: row["owner_id"].as_str()?.to_string(),
+                is_active: row["is_active"].as_i64()? == 1,
+                member_count: row["member_count"].as_i64()? as u32,
             })
         })
         .collect();
@@ -93,7 +97,7 @@ async fn get_club(club_id: &str, ctx: RouteContext<()>) -> Result<Response> {
     };
 
     // Query specific club from database
-    let stmt = db.prepare("SELECT id, name, description, avatar, created_at, updated_at, owner_id FROM clubs WHERE id = ?1");
+    let stmt = db.prepare("SELECT id, name, description, avatar_url, owner_id, settings, created_at, updated_at, is_active, member_count FROM clubs WHERE id = ?1 AND is_active = 1");
     let stmt = match stmt.bind(&vec![club_id.into()]) {
         Ok(stmt) => stmt,
         Err(_) => return Response::error("Failed to prepare query", 500),
@@ -105,10 +109,14 @@ async fn get_club(club_id: &str, ctx: RouteContext<()>) -> Result<Response> {
                 id: row["id"].as_str().unwrap_or("").to_string(),
                 name: row["name"].as_str().unwrap_or("").to_string(),
                 description: row["description"].as_str().map(|s| s.to_string()),
-                avatar: row["avatar"].as_str().map(|s| s.to_string()),
+                avatar_url: row["avatar_url"].as_str().map(|s| s.to_string()),
+                owner_id: row["owner_id"].as_str().unwrap_or("").to_string(),
+                settings: row["settings"].as_str()
+                    .and_then(|s| serde_json::from_str(s).ok()),
                 created_at: row["created_at"].as_str().unwrap_or("").to_string(),
                 updated_at: row["updated_at"].as_str().unwrap_or("").to_string(),
-                owner_id: row["owner_id"].as_str().unwrap_or("").to_string(),
+                is_active: row["is_active"].as_i64().unwrap_or(1) == 1,
+                member_count: row["member_count"].as_i64().unwrap_or(0) as u32,
             };
 
             let response = ApiResponse {
@@ -158,17 +166,17 @@ async fn create_club(mut req: Request, ctx: RouteContext<()>) -> Result<Response
     let now = Utc::now().to_rfc3339();
 
     let stmt = db.prepare("
-        INSERT INTO clubs (id, name, description, created_at, updated_at, owner_id)
-        VALUES (?1, ?2, ?3, ?4, ?5, ?6)
+        INSERT INTO clubs (id, name, description, owner_id, created_at, updated_at, is_active, member_count)
+        VALUES (?1, ?2, ?3, ?4, ?5, ?6, 1, 1)
     ");
     
     let stmt = match stmt.bind(&vec![
         club_id.clone().into(),
         create_request.name.clone().into(),
         create_request.description.clone().into(),
-        now.clone().into(),
-        now.clone().into(),
         user_id.clone().into(),
+        now.clone().into(),
+        now.clone().into(),
     ]) {
         Ok(stmt) => stmt,
         Err(_) => return Response::error("Failed to prepare club insert", 500),
@@ -178,11 +186,11 @@ async fn create_club(mut req: Request, ctx: RouteContext<()>) -> Result<Response
         return Response::error("Failed to create club", 500);
     }
 
-    // Also add the creator as an admin member
+    // Also add the creator as owner in members table
     let member_id = Uuid::new_v4().to_string();
     let member_stmt = db.prepare("
         INSERT INTO members (id, user_id, club_id, role, joined_at)
-        VALUES (?1, ?2, ?3, 'admin', ?4)
+        VALUES (?1, ?2, ?3, 'owner', ?4)
     ");
     
     if let Ok(stmt) = member_stmt.bind(&vec![
@@ -198,10 +206,13 @@ async fn create_club(mut req: Request, ctx: RouteContext<()>) -> Result<Response
         id: club_id,
         name: create_request.name,
         description: Some(create_request.description),
-        avatar: None,
+        avatar_url: None,
+        owner_id: user_id,
+        settings: None,
         created_at: now.clone(),
         updated_at: now,
-        owner_id: user_id, // Use user_id here (after cloning above)
+        is_active: true,
+        member_count: 1,
     };
 
     let response = ApiResponse {
@@ -212,6 +223,3 @@ async fn create_club(mut req: Request, ctx: RouteContext<()>) -> Result<Response
 
     Ok(Response::from_json(&response)?.with_status(201))
 }
-
-// Import the helper function from auth module
-use crate::handlers::auth::get_user_id_from_token;

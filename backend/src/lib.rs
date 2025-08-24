@@ -123,26 +123,34 @@ async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
         .post_async("/members/join", |req, ctx| async move {
             handle_members(req, ctx).await
         })
-        // Event endpoints
-        .get_async("/clubs/:club_id/events", |req, ctx| async move {
-            handle_events(req, ctx).await
-        })
-        .post_async("/events", |req, ctx| async move {
-            handle_events(req, ctx).await
-        })
-        // Announcement endpoints
-        .get_async("/clubs/:club_id/announcements", |req, ctx| async move {
-            handle_announcements(req, ctx).await
-        })
-        .post_async("/announcements", |req, ctx| async move {
-            handle_announcements(req, ctx).await
-        })
         // Project endpoints
         .get_async("/clubs/:club_id/projects", |req, ctx| async move {
             handle_projects(req, ctx).await
         })
         .post_async("/projects", |req, ctx| async move {
             handle_projects(req, ctx).await
+        })
+        // General project endpoints (not club-specific)
+        .get_async("/projects", |req, ctx| async move {
+            get_all_projects(req, ctx).await
+        })
+        .get_async("/projects/user", |req, ctx| async move {
+            get_user_projects(req, ctx).await
+        })
+        .get_async("/projects/starred", |req, ctx| async move {
+            get_starred_projects(req, ctx).await
+        })
+        .get_async("/projects/activities", |req, ctx| async move {
+            get_project_activities(req, ctx).await
+        })
+        .get_async("/projects/stats", |req, ctx| async move {
+            get_project_stats(req, ctx).await
+        })
+        .post_async("/projects/star", |req, ctx| async move {
+            toggle_project_star(req, ctx).await
+        })
+        .post_async("/projects/join", |req, ctx| async move {
+            join_project(req, ctx).await
         })
         // Curriculum endpoints
         .get_async("/clubs/:club_id/curriculum", |req, ctx| async move {
@@ -484,6 +492,32 @@ async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
         })
         .get_async("/clubs/:club_id/activity", |req, ctx| async move {
             handle_progress(req, ctx).await
+        })
+        // Dashboard endpoints
+        .get_async("/dashboard/stats", |req, ctx| async move {
+            get_dashboard_stats(req, ctx).await
+        })
+        // Courses/Learning endpoints
+        .get_async("/courses", |req, ctx| async move {
+            get_courses(req, ctx).await
+        })
+        .get_async("/courses/enrolled", |req, ctx| async move {
+            get_enrolled_courses(req, ctx).await
+        })
+        .get_async("/courses/progress", |req, ctx| async move {
+            get_course_progress(req, ctx).await
+        })
+        .get_async("/learning-paths", |req, ctx| async move {
+            get_learning_paths(req, ctx).await
+        })
+        .get_async("/courses/saved", |req, ctx| async move {
+            get_saved_courses(req, ctx).await
+        })
+        .post_async("/courses/enroll", |req, ctx| async move {
+            enroll_in_course(req, ctx).await
+        })
+        .post_async("/courses/save", |req, ctx| async move {
+            save_course(req, ctx).await
         })
         // Notification endpoints
         .get_async("/notifications", |req, ctx| async move {

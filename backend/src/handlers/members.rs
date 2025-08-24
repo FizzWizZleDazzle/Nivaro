@@ -1,5 +1,5 @@
 use crate::models::*;
-use crate::handlers::auth::verify_csrf_token;
+use crate::handlers::auth::{verify_csrf_token, get_user_id_from_token};
 use chrono::Utc;
 use uuid::Uuid;
 use worker::*;
@@ -41,16 +41,12 @@ async fn get_club_members(club_id: &str, ctx: RouteContext<()>) -> Result<Respon
         Err(_) => return Response::error("Database connection failed", 500),
     };
 
-    // Query members with user information using JOIN
+    // Query members for this club
     let stmt = db.prepare("
-        SELECT 
-            m.id, m.user_id, m.club_id, m.role, m.joined_at,
-            u.email, u.name, u.avatar, u.created_at as user_created_at, 
-            u.updated_at as user_updated_at, u.email_verified, u.is_active
-        FROM members m
-        INNER JOIN users u ON m.user_id = u.id
-        WHERE m.club_id = ?1
-        ORDER BY m.joined_at ASC
+        SELECT id, user_id, club_id, role, joined_at
+        FROM members
+        WHERE club_id = ?1
+        ORDER BY joined_at ASC
     ");
 
     let stmt = match stmt.bind(&vec![club_id.into()]) {
@@ -66,29 +62,12 @@ async fn get_club_members(club_id: &str, ctx: RouteContext<()>) -> Result<Respon
     let members: Vec<Member> = results
         .into_iter()
         .filter_map(|row| {
-            let role_str = row["role"].as_str()?;
-            let role = match role_str {
-                "admin" => MemberRole::Admin,
-                "member" => MemberRole::Member,
-                _ => return None,
-            };
-
             Some(Member {
                 id: row["id"].as_str()?.to_string(),
                 user_id: row["user_id"].as_str()?.to_string(),
                 club_id: row["club_id"].as_str()?.to_string(),
-                role,
+                role: row["role"].as_str()?.to_string(),
                 joined_at: row["joined_at"].as_str()?.to_string(),
-                user: User {
-                    id: row["user_id"].as_str()?.to_string(),
-                    email: row["email"].as_str()?.to_string(),
-                    name: row["name"].as_str()?.to_string(),
-                    avatar: row["avatar"].as_str().map(|s| s.to_string()),
-                    created_at: row["user_created_at"].as_str()?.to_string(),
-                    updated_at: row["user_updated_at"].as_str()?.to_string(),
-                    email_verified: row["email_verified"].as_i64().unwrap_or(0) == 1,
-                    is_active: row["is_active"].as_i64().unwrap_or(0) == 1,
-                },
             })
         })
         .collect();
@@ -227,7 +206,7 @@ async fn join_club(mut req: Request, ctx: RouteContext<()>) -> Result<Response> 
 
     // Get user info for response
     let user_stmt = db.prepare("SELECT id, email, name, avatar, created_at, updated_at, email_verified, is_active FROM users WHERE id = ?1");
-    let user_info = match user_stmt.bind(&vec![user_id.clone().into()]) {
+    let _user_info = match user_stmt.bind(&vec![user_id.clone().into()]) {
         Ok(stmt) => match stmt.first::<serde_json::Value>(None).await {
             Ok(Some(row)) => row,
             _ => return Response::error("Failed to get user info", 500),
@@ -237,20 +216,10 @@ async fn join_club(mut req: Request, ctx: RouteContext<()>) -> Result<Response> 
 
     let member = Member {
         id: member_id,
-        user_id: user_id.clone(),
+        user_id: user_id,
         club_id,
-        role: MemberRole::Member,
+        role: "member".to_string(),
         joined_at,
-        user: User {
-            id: user_id,
-            email: user_info["email"].as_str().unwrap_or("").to_string(),
-            name: user_info["name"].as_str().unwrap_or("").to_string(),
-            avatar: user_info["avatar"].as_str().map(|s| s.to_string()),
-            created_at: user_info["created_at"].as_str().unwrap_or("").to_string(),
-            updated_at: user_info["updated_at"].as_str().unwrap_or("").to_string(),
-            email_verified: user_info["email_verified"].as_i64().unwrap_or(0) == 1,
-            is_active: user_info["is_active"].as_i64().unwrap_or(0) == 1,
-        },
     };
 
     let response = ApiResponse {
@@ -263,4 +232,3 @@ async fn join_club(mut req: Request, ctx: RouteContext<()>) -> Result<Response> 
 }
 
 // Import the helper function from auth module
-use crate::handlers::auth::get_user_id_from_token;

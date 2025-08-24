@@ -6,11 +6,7 @@ pub struct User {
     pub id: String,
     pub email: String,
     pub name: String,
-    pub avatar_url: Option<String>,
-    pub bio: Option<String>,
-    pub skills: Option<Vec<String>>,
-    pub social_links: Option<serde_json::Value>,
-    pub preferences: Option<serde_json::Value>,
+    pub avatar: Option<String>,
     pub created_at: String,
     pub updated_at: String,
     pub email_verified: bool,
@@ -23,8 +19,7 @@ pub struct AuthUser {
     pub email: String,
     pub password_hash: String,
     pub name: String,
-    pub avatar_url: Option<String>,
-    pub bio: Option<String>,
+    pub avatar: Option<String>,
     pub created_at: String,
     pub updated_at: String,
     pub email_verified: bool,
@@ -44,6 +39,7 @@ pub struct Session {
     pub last_accessed: String,
     pub user_agent: Option<String>,
     pub ip_address: Option<String>,
+    pub is_active: bool,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -75,19 +71,46 @@ pub struct CsrfToken {
     pub created_at: String,
 }
 
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct SocialAccount {
+    pub id: String,
+    pub user_id: String,
+    pub provider: SocialProvider,
+    pub provider_id: String,
+    pub email: String,
+    pub name: String,
+    pub avatar: Option<String>,
+    pub access_token: String,
+    pub refresh_token: Option<String>,
+    pub expires_at: Option<String>,
+    pub created_at: String,
+    pub updated_at: String,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub enum SocialProvider {
+    Google,
+    GitHub,
+    Microsoft,
+    Discord,
+}
+
 // Club models
 #[derive(Serialize, Deserialize, Clone)]
 pub struct Club {
     pub id: String,
     pub name: String,
     pub description: Option<String>,
-    pub avatar_url: Option<String>,
-    pub owner_id: String,
-    pub settings: Option<serde_json::Value>,
+    pub avatar: Option<String>,
     pub created_at: String,
     pub updated_at: String,
-    pub is_active: bool,
-    pub member_count: u32,
+    pub owner_id: String,
+}
+
+#[derive(Serialize, Deserialize, Clone)]
+pub enum MemberRole {
+    Admin,
+    Member,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -95,8 +118,9 @@ pub struct Member {
     pub id: String,
     pub user_id: String,
     pub club_id: String,
-    pub role: String, // 'owner', 'admin', 'member'
+    pub role: MemberRole,
     pub joined_at: String,
+    pub user: User,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -109,40 +133,48 @@ pub struct InviteCode {
     pub used_at: Option<String>,
 }
 
-// Project models
+#[derive(Serialize, Deserialize, Clone)]
+pub struct Event {
+    pub id: String,
+    pub club_id: String,
+    pub title: String,
+    pub description: String,
+    pub date: String,
+    pub location: Option<String>,
+    pub created_by: String,
+    pub created_at: String,
+}
+
+#[derive(Serialize, Deserialize, Clone)]
+pub struct Announcement {
+    pub id: String,
+    pub club_id: String,
+    pub title: String,
+    pub content: String,
+    pub created_by: String,
+    pub created_at: String,
+    pub pinned: bool,
+}
+
+#[derive(Serialize, Deserialize, Clone)]
+#[serde(rename_all = "lowercase")]
+pub enum ProjectStatus {
+    Planning,
+    Active,
+    Completed,
+    OnHold,
+}
+
 #[derive(Serialize, Deserialize, Clone)]
 pub struct Project {
     pub id: String,
     pub club_id: String,
     pub name: String,
-    pub description: Option<String>,
-    pub owner_id: String,
-    pub status: String, // 'planning', 'active', 'completed', 'on_hold'
-    pub tech_stack: Option<Vec<String>>,
-    pub github_url: Option<String>,
-    pub demo_url: Option<String>,
-    pub tasks: Option<Vec<Task>>,
+    pub description: String,
+    pub status: ProjectStatus,
+    pub created_by: String,
     pub created_at: String,
     pub updated_at: String,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct Task {
-    pub id: String,
-    pub title: String,
-    pub description: String,
-    pub status: String,
-    pub assigned_to: Option<String>,
-    pub due_date: Option<String>,
-}
-
-#[derive(Serialize, Deserialize, Clone)]
-pub struct ProjectMember {
-    pub id: String,
-    pub project_id: String,
-    pub user_id: String,
-    pub role: String, // 'owner', 'maintainer', 'contributor', 'viewer'
-    pub joined_at: String,
 }
 
 // Learning models
@@ -150,130 +182,94 @@ pub struct ProjectMember {
 pub struct Course {
     pub id: String,
     pub title: String,
-    pub description: Option<String>,
-    pub instructor_id: String,
-    pub club_id: Option<String>,
-    pub category: Option<String>,
-    pub difficulty: Option<String>, // 'Beginner', 'Intermediate', 'Advanced'
-    pub duration_hours: Option<u32>,
-    pub thumbnail_url: Option<String>,
-    pub lessons: Vec<Lesson>,
-    pub requirements: Option<Vec<String>>,
-    pub learning_outcomes: Option<Vec<String>>,
+    pub description: String,
+    pub club_id: String,
     pub is_published: bool,
-    pub rating: f32,
-    pub enrolled_count: u32,
+    pub difficulty: CourseDifficulty,
+    pub estimated_duration: u32, // in minutes
+    pub created_by: String,      // admin user id
     pub created_at: String,
     pub updated_at: String,
+    pub lessons: Vec<Lesson>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum CourseDifficulty {
+    Beginner,
+    Intermediate,
+    Advanced,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Lesson {
     pub id: String,
+    pub course_id: String,
     pub title: String,
     pub description: String,
-    pub youtube_video_id: Option<String>,
-    pub content_markdown: Option<String>,
-    pub duration_minutes: u32,
-    pub resources: Option<Vec<Resource>>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Resource {
-    pub title: String,
-    pub url: String,
-    pub resource_type: String, // 'pdf', 'link', 'code', etc.
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Enrollment {
-    pub id: String,
-    pub user_id: String,
-    pub course_id: String,
-    pub enrolled_at: String,
-    pub completed_at: Option<String>,
-    pub last_accessed: Option<String>,
-    pub progress: Option<UserProgress>,
-    pub completion_percentage: f32,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct UserProgress {
-    pub completed_lessons: Vec<String>,
-    pub quiz_scores: Option<serde_json::Value>,
-    pub notes: Option<serde_json::Value>,
-    pub bookmarks: Option<Vec<String>>,
-    pub last_lesson_id: Option<String>,
-}
-
-// Meeting models
-#[derive(Serialize, Deserialize, Clone)]
-pub struct Meeting {
-    pub id: String,
-    pub club_id: String,
-    pub host_id: String,
-    pub title: String,
-    pub description: Option<String>,
-    pub meeting_date: String,
-    pub meeting_time: String,
-    pub duration_minutes: u32,
-    pub location: Option<String>,
-    pub meeting_link: Option<String>,
-    pub is_online: bool,
-    pub max_attendees: Option<u32>,
-    pub status: String, // 'scheduled', 'in_progress', 'completed', 'cancelled'
-    pub agenda: Option<String>,
-    pub notes: Option<String>,
-    pub recording_url: Option<String>,
-    pub attendees: Option<Vec<Attendee>>,
+    pub content: LessonContent,
+    pub order: u32,
+    pub is_published: bool,
+    pub estimated_duration: u32, // in minutes
     pub created_at: String,
     pub updated_at: String,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct Attendee {
-    pub user_id: String,
-    pub name: String,
-    pub rsvp: String, // 'yes', 'no', 'maybe'
-    pub attended: bool,
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct LessonContent {
+    pub rich_text: Option<String>, // HTML or markdown content
+    pub video_url: Option<String>,
+    pub video_embed_id: Option<String>, // YouTube, Vimeo, etc.
+    pub code_snippets: Option<Vec<CodeSnippet>>,
+    pub resources: Option<Vec<Resource>>,
 }
 
-// Activity models
-#[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct Activity {
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CodeSnippet {
     pub id: String,
-    pub club_id: Option<String>,
-    pub user_id: String,
-    pub activity_type: String, // 'announcement', 'event', 'discussion', 'project_update'
+    pub language: String,
+    pub code: String,
+    pub title: Option<String>,
+    pub description: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Resource {
+    pub id: String,
     pub title: String,
-    pub content: String,
-    pub data: Option<serde_json::Value>,
-    pub is_pinned: bool,
+    pub description: Option<String>,
+    pub resource_type: ResourceType,
+    pub url: String,
+    pub file_size: Option<u64>, // in bytes
+    pub mime_type: Option<String>,
     pub created_at: String,
 }
 
-// Star/Favorite models
-#[derive(Serialize, Deserialize, Clone)]
-pub struct Star {
-    pub id: String,
-    pub user_id: String,
-    pub target_id: String,
-    pub target_type: String, // 'project', 'course', 'club'
-    pub starred_at: String,
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum ResourceType {
+    File,
+    Link,
+    Document,
 }
 
-// Notification models
-#[derive(Serialize, Deserialize, Clone)]
-pub struct Notification {
-    pub id: String,
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct UserProgress {
     pub user_id: String,
-    pub notification_type: String,
-    pub title: String,
-    pub message: String,
-    pub link: Option<String>,
-    pub data: Option<serde_json::Value>,
-    pub is_read: bool,
-    pub created_at: String,
+    pub course_id: String,
+    pub completed_lessons: Vec<String>, // lesson IDs
+    pub started_at: String,
+    pub last_accessed_at: String,
+    pub completed_at: Option<String>,
+    pub progress_percentage: f32,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct LessonProgress {
+    pub user_id: String,
+    pub lesson_id: String,
+    pub is_completed: bool,
+    pub time_spent: u32, // in minutes
+    pub completed_at: Option<String>,
+    pub last_accessed_at: String,
 }
 
 // Auth API Request types
@@ -311,14 +307,26 @@ pub struct ChangePasswordRequest {
 pub struct UpdateProfileRequest {
     pub name: Option<String>,
     pub email: Option<String>,
-    pub bio: Option<String>,
-    pub skills: Option<Vec<String>>,
-    pub social_links: Option<serde_json::Value>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct VerifyEmailRequest {
     pub token: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct SocialLoginRequest {
+    pub provider: SocialProvider,
+    pub access_token: String,
+    pub profile: SocialUserProfile,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct SocialUserProfile {
+    pub id: String,
+    pub email: String,
+    pub name: String,
+    pub avatar: Option<String>,
 }
 
 // Auth API Response types
@@ -353,35 +361,40 @@ pub struct JoinClubRequest {
 pub struct CreateCourseRequest {
     pub title: String,
     pub description: String,
-    pub club_id: Option<String>,
-    pub category: String,
-    pub difficulty: String,
-    pub duration_hours: u32,
+    pub club_id: String,
+    pub difficulty: CourseDifficulty,
+    pub estimated_duration: u32,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct CreateProjectRequest {
-    pub name: String,
-    pub description: String,
-    pub club_id: String,
-    pub tech_stack: Vec<String>,
-    pub github_url: Option<String>,
-    pub demo_url: Option<String>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct CreateMeetingRequest {
-    pub club_id: String,
+pub struct CreateLessonRequest {
+    pub course_id: String,
     pub title: String,
     pub description: String,
-    pub meeting_date: String,
-    pub meeting_time: String,
-    pub duration_minutes: u32,
-    pub location: Option<String>,
-    pub meeting_link: Option<String>,
-    pub is_online: bool,
-    pub max_attendees: Option<u32>,
-    pub agenda: Option<String>,
+    pub content: LessonContent,
+    pub estimated_duration: u32,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct UpdateProgressRequest {
+    pub lesson_id: String,
+    pub is_completed: bool,
+    pub time_spent: u32,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CoursesResponse {
+    pub courses: Vec<Course>,
+    pub total: u32,
+    pub page: u32,
+    pub limit: u32,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CourseWithProgress {
+    #[serde(flatten)]
+    pub course: Course,
+    pub progress: Option<UserProgress>,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -407,21 +420,4 @@ impl<T> ApiResponse<T> {
             error: Some(error),
         }
     }
-}
-
-// Dashboard statistics
-#[derive(Serialize, Deserialize, Debug)]
-pub struct DashboardStats {
-    pub total_clubs: u32,
-    pub total_members: u32,
-    pub active_meetings: u32,
-    pub upcoming_events: u32,
-    pub recent_announcements: Vec<Activity>,
-    pub member_activity: Vec<ActivityData>,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct ActivityData {
-    pub date: String,
-    pub count: u32,
 }

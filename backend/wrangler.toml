@@ -13,6 +13,10 @@ binding = "DB"
 database_name = "nivaro-auth"
 database_id = "placeholder-for-real-deployment"
 
+[[r2_buckets]]
+binding = "STORAGE"
+bucket_name = "nivaro-content"
+
 # Production environment
 [env.production]
 name = "nivaro-backend"

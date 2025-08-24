@@ -1,12 +1,18 @@
--- Nivaro Authentication Database Schema for Cloudflare D1
+-- Optimized Nivaro Database Schema 
+-- Minimizes D1 write operations by combining related data
+-- R2 used only for large files (avatars, documents, videos)
 
--- Users table (main user authentication data)
+-- Users table (combines profile data to avoid multiple writes)
 CREATE TABLE IF NOT EXISTS users (
     id TEXT PRIMARY KEY,
     email TEXT UNIQUE NOT NULL,
     password_hash TEXT NOT NULL,
     name TEXT NOT NULL,
-    avatar TEXT,
+    avatar_url TEXT, -- R2 URL for avatar image
+    bio TEXT,
+    skills TEXT, -- JSON array
+    social_links TEXT, -- JSON object
+    preferences TEXT, -- JSON object
     created_at TEXT NOT NULL,
     updated_at TEXT NOT NULL,
     email_verified INTEGER DEFAULT 0,
@@ -16,7 +22,7 @@ CREATE TABLE IF NOT EXISTS users (
     locked_until TEXT
 );
 
--- Sessions table (user sessions and JWT tokens)
+-- Sessions table (minimal for JWT validation)
 CREATE TABLE IF NOT EXISTS sessions (
     id TEXT PRIMARY KEY,
     user_id TEXT NOT NULL,
@@ -26,11 +32,179 @@ CREATE TABLE IF NOT EXISTS sessions (
     last_accessed TEXT NOT NULL,
     user_agent TEXT,
     ip_address TEXT,
-    is_active INTEGER DEFAULT 1,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
--- Email verification tokens
+-- Clubs table (all club data in one row to minimize writes)
+CREATE TABLE IF NOT EXISTS clubs (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    description TEXT,
+    avatar_url TEXT, -- R2 URL for avatar
+    owner_id TEXT NOT NULL,
+    settings TEXT, -- JSON object
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    is_active INTEGER DEFAULT 1,
+    member_count INTEGER DEFAULT 0,
+    FOREIGN KEY (owner_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- Members table (needed for efficient querying of user's clubs)
+CREATE TABLE IF NOT EXISTS members (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    club_id TEXT NOT NULL,
+    role TEXT NOT NULL CHECK (role IN ('owner', 'admin', 'member')),
+    joined_at TEXT NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (club_id) REFERENCES clubs(id) ON DELETE CASCADE,
+    UNIQUE(user_id, club_id)
+);
+
+-- Projects table (all project data in one row)
+CREATE TABLE IF NOT EXISTS projects (
+    id TEXT PRIMARY KEY,
+    club_id TEXT NOT NULL,
+    name TEXT NOT NULL,
+    description TEXT,
+    owner_id TEXT NOT NULL,
+    status TEXT CHECK (status IN ('planning', 'active', 'completed', 'on_hold')),
+    tech_stack TEXT, -- JSON array
+    github_url TEXT,
+    demo_url TEXT,
+    tasks TEXT, -- JSON array of tasks
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    FOREIGN KEY (club_id) REFERENCES clubs(id) ON DELETE CASCADE,
+    FOREIGN KEY (owner_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- Project members (needed for permissions)
+CREATE TABLE IF NOT EXISTS project_members (
+    id TEXT PRIMARY KEY,
+    project_id TEXT NOT NULL,
+    user_id TEXT NOT NULL,
+    role TEXT CHECK (role IN ('owner', 'maintainer', 'contributor', 'viewer')),
+    joined_at TEXT NOT NULL,
+    FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    UNIQUE(project_id, user_id)
+);
+
+-- Courses table (all course metadata in one row)
+CREATE TABLE IF NOT EXISTS courses (
+    id TEXT PRIMARY KEY,
+    title TEXT NOT NULL,
+    description TEXT,
+    instructor_id TEXT NOT NULL,
+    club_id TEXT, -- Optional club association
+    category TEXT,
+    difficulty TEXT CHECK (difficulty IN ('Beginner', 'Intermediate', 'Advanced')),
+    duration_hours INTEGER,
+    thumbnail_url TEXT, -- R2 URL for thumbnail
+    lessons TEXT NOT NULL, -- JSON array of lesson objects
+    requirements TEXT, -- JSON array
+    learning_outcomes TEXT, -- JSON array
+    is_published INTEGER DEFAULT 0,
+    rating REAL DEFAULT 0,
+    enrolled_count INTEGER DEFAULT 0,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    FOREIGN KEY (instructor_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (club_id) REFERENCES clubs(id) ON DELETE SET NULL
+);
+
+-- Course enrollments (one row per enrollment, includes all progress)
+CREATE TABLE IF NOT EXISTS enrollments (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    course_id TEXT NOT NULL,
+    enrolled_at TEXT NOT NULL,
+    completed_at TEXT,
+    last_accessed TEXT,
+    progress TEXT, -- JSON object with completed_lessons, quiz_scores, notes, bookmarks
+    completion_percentage REAL DEFAULT 0,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE,
+    UNIQUE(user_id, course_id)
+);
+
+-- Meetings table (all meeting data in one row)
+CREATE TABLE IF NOT EXISTS meetings (
+    id TEXT PRIMARY KEY,
+    club_id TEXT NOT NULL,
+    host_id TEXT NOT NULL,
+    title TEXT NOT NULL,
+    description TEXT,
+    meeting_date TEXT NOT NULL,
+    meeting_time TEXT NOT NULL,
+    duration_minutes INTEGER DEFAULT 60,
+    location TEXT,
+    meeting_link TEXT,
+    is_online INTEGER DEFAULT 0,
+    max_attendees INTEGER,
+    status TEXT CHECK (status IN ('scheduled', 'in_progress', 'completed', 'cancelled')),
+    agenda TEXT,
+    notes TEXT,
+    recording_url TEXT, -- YouTube or R2 URL
+    attendees TEXT, -- JSON array of attendee objects with RSVP status
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    FOREIGN KEY (club_id) REFERENCES clubs(id) ON DELETE CASCADE,
+    FOREIGN KEY (host_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- Announcements table (combined with events and activities)
+CREATE TABLE IF NOT EXISTS activities (
+    id TEXT PRIMARY KEY,
+    club_id TEXT,
+    user_id TEXT NOT NULL,
+    activity_type TEXT NOT NULL, -- 'announcement', 'event', 'discussion', 'project_update'
+    title TEXT NOT NULL,
+    content TEXT NOT NULL,
+    data TEXT, -- JSON object with type-specific data
+    is_pinned INTEGER DEFAULT 0,
+    created_at TEXT NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (club_id) REFERENCES clubs(id) ON DELETE SET NULL
+);
+
+-- Stars table (for favoriting items)
+CREATE TABLE IF NOT EXISTS stars (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    target_id TEXT NOT NULL,
+    target_type TEXT NOT NULL, -- 'project', 'course', 'club'
+    starred_at TEXT NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    UNIQUE(user_id, target_id, target_type)
+);
+
+-- Notifications table (all notification data in one row)
+CREATE TABLE IF NOT EXISTS notifications (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    type TEXT NOT NULL,
+    title TEXT NOT NULL,
+    message TEXT NOT NULL,
+    link TEXT,
+    data TEXT, -- JSON object with additional data
+    is_read INTEGER DEFAULT 0,
+    created_at TEXT NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- CSRF tokens
+CREATE TABLE IF NOT EXISTS csrf_tokens (
+    token TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    expires_at TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- Email verifications
 CREATE TABLE IF NOT EXISTS email_verifications (
     id TEXT PRIMARY KEY,
     user_id TEXT NOT NULL,
@@ -41,7 +215,7 @@ CREATE TABLE IF NOT EXISTS email_verifications (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
--- Password reset tokens
+-- Password resets
 CREATE TABLE IF NOT EXISTS password_resets (
     id TEXT PRIMARY KEY,
     user_id TEXT NOT NULL,
@@ -52,100 +226,7 @@ CREATE TABLE IF NOT EXISTS password_resets (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
--- Social accounts (OAuth providers)
-CREATE TABLE IF NOT EXISTS social_accounts (
-    id TEXT PRIMARY KEY,
-    user_id TEXT NOT NULL,
-    provider TEXT NOT NULL,
-    provider_id TEXT NOT NULL,
-    email TEXT NOT NULL,
-    name TEXT NOT NULL,
-    avatar TEXT,
-    access_token TEXT NOT NULL,
-    refresh_token TEXT,
-    expires_at TEXT,
-    created_at TEXT NOT NULL,
-    updated_at TEXT NOT NULL,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    UNIQUE(provider, provider_id)
-);
-
--- CSRF tokens for protecting against Cross-Site Request Forgery
-CREATE TABLE IF NOT EXISTS csrf_tokens (
-    id TEXT PRIMARY KEY,
-    user_id TEXT NOT NULL,
-    token TEXT UNIQUE NOT NULL,
-    expires_at TEXT NOT NULL,
-    created_at TEXT NOT NULL,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-);
-
--- Clubs table (club/community management)
-CREATE TABLE IF NOT EXISTS clubs (
-    id TEXT PRIMARY KEY,
-    name TEXT NOT NULL,
-    description TEXT,
-    avatar TEXT,
-    created_at TEXT NOT NULL,
-    updated_at TEXT NOT NULL,
-    owner_id TEXT NOT NULL,
-    FOREIGN KEY (owner_id) REFERENCES users(id) ON DELETE CASCADE
-);
-
--- Members table (club membership relationships)
-CREATE TABLE IF NOT EXISTS members (
-    id TEXT PRIMARY KEY,
-    user_id TEXT NOT NULL,
-    club_id TEXT NOT NULL,
-    role TEXT NOT NULL CHECK (role IN ('admin', 'member')),
-    joined_at TEXT NOT NULL,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (club_id) REFERENCES clubs(id) ON DELETE CASCADE,
-    UNIQUE(user_id, club_id)
-);
-
--- Events table (club meetings and events)
-CREATE TABLE IF NOT EXISTS events (
-    id TEXT PRIMARY KEY,
-    club_id TEXT NOT NULL,
-    title TEXT NOT NULL,
-    description TEXT NOT NULL,
-    date TEXT NOT NULL,
-    location TEXT,
-    created_by TEXT NOT NULL,
-    created_at TEXT NOT NULL,
-    FOREIGN KEY (club_id) REFERENCES clubs(id) ON DELETE CASCADE,
-    FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE CASCADE
-);
-
--- Announcements table (club announcements)  
-CREATE TABLE IF NOT EXISTS announcements (
-    id TEXT PRIMARY KEY,
-    club_id TEXT NOT NULL,
-    title TEXT NOT NULL,
-    content TEXT NOT NULL,
-    created_by TEXT NOT NULL,
-    created_at TEXT NOT NULL,
-    pinned INTEGER DEFAULT 0,
-    FOREIGN KEY (club_id) REFERENCES clubs(id) ON DELETE CASCADE,
-    FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE CASCADE
-);
-
--- Projects table (club projects and collaborations)
-CREATE TABLE IF NOT EXISTS projects (
-    id TEXT PRIMARY KEY,
-    club_id TEXT NOT NULL,
-    name TEXT NOT NULL,
-    description TEXT NOT NULL,
-    status TEXT NOT NULL CHECK (status IN ('planning', 'active', 'completed', 'on-hold')),
-    created_by TEXT NOT NULL,
-    created_at TEXT NOT NULL,
-    updated_at TEXT NOT NULL,
-    FOREIGN KEY (club_id) REFERENCES clubs(id) ON DELETE CASCADE,
-    FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE CASCADE
-);
-
--- Invite codes table (club invitation management)
+-- Invite codes
 CREATE TABLE IF NOT EXISTS invite_codes (
     code TEXT PRIMARY KEY,
     club_id TEXT NOT NULL,
@@ -158,228 +239,55 @@ CREATE TABLE IF NOT EXISTS invite_codes (
     FOREIGN KEY (used_by) REFERENCES users(id) ON DELETE SET NULL
 );
 
--- Indexes for better performance
+-- Indexes for performance
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
-CREATE INDEX IF NOT EXISTS idx_users_email_verified ON users(email_verified);
-CREATE INDEX IF NOT EXISTS idx_users_is_active ON users(is_active);
-CREATE INDEX IF NOT EXISTS idx_sessions_user_id ON sessions(user_id);
 CREATE INDEX IF NOT EXISTS idx_sessions_token ON sessions(token);
-CREATE INDEX IF NOT EXISTS idx_sessions_expires_at ON sessions(expires_at);
-CREATE INDEX IF NOT EXISTS idx_email_verifications_token ON email_verifications(token);
-CREATE INDEX IF NOT EXISTS idx_email_verifications_user_id ON email_verifications(user_id);
-CREATE INDEX IF NOT EXISTS idx_password_resets_token ON password_resets(token);
-CREATE INDEX IF NOT EXISTS idx_password_resets_user_id ON password_resets(user_id);
-CREATE INDEX IF NOT EXISTS idx_social_accounts_user_id ON social_accounts(user_id);
-CREATE INDEX IF NOT EXISTS idx_social_accounts_provider ON social_accounts(provider, provider_id);
-CREATE INDEX IF NOT EXISTS idx_csrf_tokens_user_id ON csrf_tokens(user_id);
-CREATE INDEX IF NOT EXISTS idx_csrf_tokens_token ON csrf_tokens(token);
-CREATE INDEX IF NOT EXISTS idx_csrf_tokens_expires_at ON csrf_tokens(expires_at);
-
--- New table indexes
-CREATE INDEX IF NOT EXISTS idx_clubs_owner_id ON clubs(owner_id);
-CREATE INDEX IF NOT EXISTS idx_clubs_created_at ON clubs(created_at);
-CREATE INDEX IF NOT EXISTS idx_members_user_id ON members(user_id);
-CREATE INDEX IF NOT EXISTS idx_members_club_id ON members(club_id);
-CREATE INDEX IF NOT EXISTS idx_members_role ON members(role);
-CREATE INDEX IF NOT EXISTS idx_events_club_id ON events(club_id);
-CREATE INDEX IF NOT EXISTS idx_events_date ON events(date);
-CREATE INDEX IF NOT EXISTS idx_events_created_by ON events(created_by);
-CREATE INDEX IF NOT EXISTS idx_announcements_club_id ON announcements(club_id);
-CREATE INDEX IF NOT EXISTS idx_announcements_pinned ON announcements(pinned);
-CREATE INDEX IF NOT EXISTS idx_announcements_created_by ON announcements(created_by);
-CREATE INDEX IF NOT EXISTS idx_projects_club_id ON projects(club_id);
+CREATE INDEX IF NOT EXISTS idx_sessions_expires ON sessions(expires_at);
+CREATE INDEX IF NOT EXISTS idx_members_user ON members(user_id);
+CREATE INDEX IF NOT EXISTS idx_members_club ON members(club_id);
+CREATE INDEX IF NOT EXISTS idx_projects_club ON projects(club_id);
 CREATE INDEX IF NOT EXISTS idx_projects_status ON projects(status);
-CREATE INDEX IF NOT EXISTS idx_projects_created_by ON projects(created_by);
-CREATE INDEX IF NOT EXISTS idx_invite_codes_club_id ON invite_codes(club_id);
-CREATE INDEX IF NOT EXISTS idx_invite_codes_expires_at ON invite_codes(expires_at);
-CREATE INDEX IF NOT EXISTS idx_invite_codes_used_by ON invite_codes(used_by);
+CREATE INDEX IF NOT EXISTS idx_project_members_project ON project_members(project_id);
+CREATE INDEX IF NOT EXISTS idx_project_members_user ON project_members(user_id);
+CREATE INDEX IF NOT EXISTS idx_courses_instructor ON courses(instructor_id);
+CREATE INDEX IF NOT EXISTS idx_courses_published ON courses(is_published);
+CREATE INDEX IF NOT EXISTS idx_enrollments_user ON enrollments(user_id);
+CREATE INDEX IF NOT EXISTS idx_enrollments_course ON enrollments(course_id);
+CREATE INDEX IF NOT EXISTS idx_meetings_club ON meetings(club_id);
+CREATE INDEX IF NOT EXISTS idx_meetings_date ON meetings(meeting_date);
+CREATE INDEX IF NOT EXISTS idx_activities_club ON activities(club_id);
+CREATE INDEX IF NOT EXISTS idx_activities_user ON activities(user_id);
+CREATE INDEX IF NOT EXISTS idx_activities_created ON activities(created_at);
+CREATE INDEX IF NOT EXISTS idx_stars_user ON stars(user_id);
+CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(user_id);
+CREATE INDEX IF NOT EXISTS idx_csrf_expires ON csrf_tokens(expires_at);
 
--- Curriculum and Learning Tables
-
--- Curricula table (main curriculum for a club)
-CREATE TABLE IF NOT EXISTS curricula (
-    id TEXT PRIMARY KEY,
-    club_id TEXT NOT NULL,
-    title TEXT NOT NULL,
-    description TEXT,
-    created_by TEXT NOT NULL,
-    created_at TEXT NOT NULL,
-    updated_at TEXT NOT NULL,
-    is_published INTEGER DEFAULT 0,
-    FOREIGN KEY (club_id) REFERENCES clubs(id) ON DELETE CASCADE,
-    FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE CASCADE
-);
-
--- Modules table (sections within a curriculum)
-CREATE TABLE IF NOT EXISTS modules (
-    id TEXT PRIMARY KEY,
-    curriculum_id TEXT NOT NULL,
-    title TEXT NOT NULL,
-    description TEXT,
-    order_index INTEGER NOT NULL,
-    created_at TEXT NOT NULL,
-    updated_at TEXT NOT NULL,
-    FOREIGN KEY (curriculum_id) REFERENCES curricula(id) ON DELETE CASCADE
-);
-
--- Lessons table (individual lessons within modules)
-CREATE TABLE IF NOT EXISTS lessons (
-    id TEXT PRIMARY KEY,
-    module_id TEXT NOT NULL,
-    title TEXT NOT NULL,
-    content TEXT NOT NULL,
-    lesson_type TEXT CHECK (lesson_type IN ('video', 'text', 'quiz', 'assignment')),
-    video_url TEXT,
-    duration_minutes INTEGER,
-    order_index INTEGER NOT NULL,
-    created_at TEXT NOT NULL,
-    updated_at TEXT NOT NULL,
-    FOREIGN KEY (module_id) REFERENCES modules(id) ON DELETE CASCADE
-);
-
--- Assignments table (tasks for students)
-CREATE TABLE IF NOT EXISTS assignments (
-    id TEXT PRIMARY KEY,
-    club_id TEXT NOT NULL,
-    lesson_id TEXT,
-    title TEXT NOT NULL,
-    description TEXT NOT NULL,
-    due_date TEXT,
-    max_points INTEGER DEFAULT 100,
-    created_by TEXT NOT NULL,
-    created_at TEXT NOT NULL,
-    updated_at TEXT NOT NULL,
-    FOREIGN KEY (club_id) REFERENCES clubs(id) ON DELETE CASCADE,
-    FOREIGN KEY (lesson_id) REFERENCES lessons(id) ON DELETE SET NULL,
-    FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE CASCADE
-);
-
--- Submissions table (student submissions for assignments)
-CREATE TABLE IF NOT EXISTS submissions (
-    id TEXT PRIMARY KEY,
-    assignment_id TEXT NOT NULL,
-    user_id TEXT NOT NULL,
-    content TEXT,
-    file_url TEXT,
-    status TEXT CHECK (status IN ('draft', 'submitted', 'graded', 'returned')),
-    points_earned INTEGER,
-    feedback TEXT,
-    submitted_at TEXT,
-    graded_at TEXT,
-    graded_by TEXT,
-    created_at TEXT NOT NULL,
-    updated_at TEXT NOT NULL,
-    FOREIGN KEY (assignment_id) REFERENCES assignments(id) ON DELETE CASCADE,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (graded_by) REFERENCES users(id) ON DELETE SET NULL,
-    UNIQUE(assignment_id, user_id)
-);
-
--- Peer reviews table
-CREATE TABLE IF NOT EXISTS peer_reviews (
-    id TEXT PRIMARY KEY,
-    submission_id TEXT NOT NULL,
-    reviewer_id TEXT NOT NULL,
-    rubric_scores TEXT, -- JSON string of rubric scores
-    comments TEXT,
-    created_at TEXT NOT NULL,
-    updated_at TEXT NOT NULL,
-    FOREIGN KEY (submission_id) REFERENCES submissions(id) ON DELETE CASCADE,
-    FOREIGN KEY (reviewer_id) REFERENCES users(id) ON DELETE CASCADE,
-    UNIQUE(submission_id, reviewer_id)
-);
-
--- Progress tracking table
-CREATE TABLE IF NOT EXISTS user_progress (
-    id TEXT PRIMARY KEY,
-    user_id TEXT NOT NULL,
-    lesson_id TEXT NOT NULL,
-    completed INTEGER DEFAULT 0,
-    completed_at TEXT,
-    time_spent_minutes INTEGER DEFAULT 0,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (lesson_id) REFERENCES lessons(id) ON DELETE CASCADE,
-    UNIQUE(user_id, lesson_id)
-);
-
--- Badges table
-CREATE TABLE IF NOT EXISTS badges (
-    id TEXT PRIMARY KEY,
-    club_id TEXT NOT NULL,
-    name TEXT NOT NULL,
-    description TEXT,
-    icon_url TEXT,
-    criteria TEXT, -- JSON string defining earning criteria
-    created_at TEXT NOT NULL,
-    FOREIGN KEY (club_id) REFERENCES clubs(id) ON DELETE CASCADE
-);
-
--- User badges table (earned badges)
-CREATE TABLE IF NOT EXISTS user_badges (
-    id TEXT PRIMARY KEY,
-    user_id TEXT NOT NULL,
-    badge_id TEXT NOT NULL,
-    earned_at TEXT NOT NULL,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (badge_id) REFERENCES badges(id) ON DELETE CASCADE,
-    UNIQUE(user_id, badge_id)
-);
-
--- Discussion forums table
-CREATE TABLE IF NOT EXISTS discussions (
-    id TEXT PRIMARY KEY,
-    club_id TEXT NOT NULL,
-    lesson_id TEXT,
-    title TEXT NOT NULL,
-    content TEXT NOT NULL,
-    author_id TEXT NOT NULL,
-    is_pinned INTEGER DEFAULT 0,
-    is_locked INTEGER DEFAULT 0,
-    created_at TEXT NOT NULL,
-    updated_at TEXT NOT NULL,
-    FOREIGN KEY (club_id) REFERENCES clubs(id) ON DELETE CASCADE,
-    FOREIGN KEY (lesson_id) REFERENCES lessons(id) ON DELETE SET NULL,
-    FOREIGN KEY (author_id) REFERENCES users(id) ON DELETE CASCADE
-);
-
--- Discussion replies table
-CREATE TABLE IF NOT EXISTS discussion_replies (
-    id TEXT PRIMARY KEY,
-    discussion_id TEXT NOT NULL,
-    author_id TEXT NOT NULL,
-    content TEXT NOT NULL,
-    is_solution INTEGER DEFAULT 0,
-    created_at TEXT NOT NULL,
-    updated_at TEXT NOT NULL,
-    FOREIGN KEY (discussion_id) REFERENCES discussions(id) ON DELETE CASCADE,
-    FOREIGN KEY (author_id) REFERENCES users(id) ON DELETE CASCADE
-);
-
--- Notifications table
-CREATE TABLE IF NOT EXISTS notifications (
-    id TEXT PRIMARY KEY,
-    user_id TEXT NOT NULL,
-    type TEXT NOT NULL,
-    title TEXT NOT NULL,
-    message TEXT NOT NULL,
-    link TEXT,
-    is_read INTEGER DEFAULT 0,
-    created_at TEXT NOT NULL,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-);
-
--- Create indexes for new tables
-CREATE INDEX IF NOT EXISTS idx_curricula_club_id ON curricula(club_id);
-CREATE INDEX IF NOT EXISTS idx_modules_curriculum_id ON modules(curriculum_id);
-CREATE INDEX IF NOT EXISTS idx_lessons_module_id ON lessons(module_id);
-CREATE INDEX IF NOT EXISTS idx_assignments_club_id ON assignments(club_id);
-CREATE INDEX IF NOT EXISTS idx_assignments_lesson_id ON assignments(lesson_id);
-CREATE INDEX IF NOT EXISTS idx_submissions_assignment_id ON submissions(assignment_id);
-CREATE INDEX IF NOT EXISTS idx_submissions_user_id ON submissions(user_id);
-CREATE INDEX IF NOT EXISTS idx_peer_reviews_submission_id ON peer_reviews(submission_id);
-CREATE INDEX IF NOT EXISTS idx_user_progress_user_id ON user_progress(user_id);
-CREATE INDEX IF NOT EXISTS idx_user_progress_lesson_id ON user_progress(lesson_id);
-CREATE INDEX IF NOT EXISTS idx_user_badges_user_id ON user_badges(user_id);
-CREATE INDEX IF NOT EXISTS idx_discussions_club_id ON discussions(club_id);
-CREATE INDEX IF NOT EXISTS idx_discussion_replies_discussion_id ON discussion_replies(discussion_id);
-CREATE INDEX IF NOT EXISTS idx_notifications_user_id ON notifications(user_id);
+-- Example of JSON structures stored in TEXT columns:
+-- 
+-- courses.lessons: [
+--   {
+--     "id": "lesson1",
+--     "title": "Introduction",
+--     "description": "Course introduction",
+--     "youtube_video_id": "dQw4w9WgXcQ",
+--     "content_markdown": "# Lesson 1\n\nContent here...",
+--     "duration_minutes": 30,
+--     "resources": [
+--       {"title": "Slides", "url": "https://r2.domain.com/slides.pdf"},
+--       {"title": "Code", "url": "https://github.com/..."}
+--     ]
+--   }
+-- ]
+--
+-- enrollments.progress: {
+--   "completed_lessons": ["lesson1", "lesson2"],
+--   "quiz_scores": {"quiz1": 85, "quiz2": 92},
+--   "notes": {"lesson1": "Important points..."},
+--   "bookmarks": ["lesson3_timestamp_5:30"],
+--   "last_lesson_id": "lesson2"
+-- }
+--
+-- meetings.attendees: [
+--   {"user_id": "user1", "name": "John", "rsvp": "yes", "attended": true},
+--   {"user_id": "user2", "name": "Jane", "rsvp": "maybe", "attended": false}
+-- ]
